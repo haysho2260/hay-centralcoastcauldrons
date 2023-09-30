@@ -39,7 +39,6 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         
     print(barrels_delivered)
     return "OK"
-    # return ["HELLO", num_red_ml_have, num_gold_have]
 
 # Gets called once a day
 @router.post("/plan")
