@@ -25,21 +25,14 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     
     with db.engine.begin() as connection:
         for barrel in barrels_delivered:
-            # see how much red ml left
-            num_red_ml_have = connection.execute(sqlalchemy.text("SELECT num_red_ml FROM global_inventory"))
-            # add amount of red ml
             num_red_ml_added = barrel.ml_per_barrel * barrel.quantity
-            # update in db
-            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_red_ml = {num_red_ml_have + num_red_ml_added}"))
-            # find amount gold, find amount used, update db
-            num_gold_have = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory"))
+            connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_ml = num_red_ml + :red_ml_added"),{"red_ml_added": num_red_ml_added})
             num_gold_used = barrel.price * barrel.quantity
-            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {num_gold_have -  num_gold_used}"))
+            connection.execute(sqlalchemy.text("UPDATE global_inventory SET gold = gold - :gold_used"), {"gold_used": num_gold_used})
            
         
     print(barrels_delivered)
-
-    return "OK"
+    return "HELLO"
 
 # Gets called once a day
 @router.post("/plan")
