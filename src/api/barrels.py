@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from src.api import auth
+import sqlalchemy
+from src import database as db
+
 
 router = APIRouter(
     prefix="/barrels",
@@ -19,7 +22,21 @@ class Barrel(BaseModel):
 
 @router.post("/deliver")
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
-    """ """
+    
+    with db.engine.begin() as connection:
+        for barrel in barrels_delivered:
+            # see how much red ml left
+            num_red_ml_have = connection.execute(sqlalchemy.text("SELECT num_red_ml FROM global_inventory"))
+            # add amount of red ml
+            num_red_ml_added = barrel.ml_per_barrel * barrel.quantity
+            # update in db
+            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_red_ml = {num_red_ml_have + num_red_ml_added}"))
+            # find amount gold, find amount used, update db
+            num_gold_have = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory"))
+            num_gold_used = barrel.price * barrel.quantity
+            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {num_gold_have -  num_gold_used}"))
+           
+        
     print(barrels_delivered)
 
     return "OK"
@@ -27,12 +44,18 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 # Gets called once a day
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
-    """ """
-    print(wholesale_catalog)
+    plan = []
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory"))
+    first_row = result.first()
+    num_gold = first_row.gold() 
+    for barrel in wholesale_catalog:
+        barrels_to_buy = 0
+        if barrel.sku == "SMALL_RED_BARREL":
+            if num_gold >= 10:
+                barrels_to_buy = num_gold // barrel.price
+                num_gold = num_gold - (barrels_to_buy * barrel.price)
+            plan.append({"sku":barrel.sku, "quanitity":barrels_to_buy})
+            break
 
-    return [
-        {
-            "sku": "SMALL_RED_BARREL",
-            "quantity": 1,
-        }
-    ]
+    return plan
