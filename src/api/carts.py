@@ -46,10 +46,9 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """If value not in local dict, add to local dict
     if value is in local dict, add quantity to existing value"""
     if item_sku in cart_ids[cart_id]:
-        cart_ids[cart_id][item_sku]["cart_item"] += cart_item
+        cart_ids[cart_id][item_sku]["cart_item"].quantity += cart_item.quantity
     else:
-        cart_ids[cart_id]["sku"] = item_sku
-        cart_ids[cart_id][item_sku]["cart_item"] = cart_item
+        cart_ids[cart_id] = {item_sku: {"cart_item": cart_item}}
 
     return "OK"
 
@@ -66,7 +65,17 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     # in the body of this post the quanitiy
     total_potions = 0
     print(f"cart checkout payment {cart_checkout.payment}")
-    for sku in cart_ids[cart_id]:
-        quantity_potions_bought = sku["cart_item"].quantity
-        total_potions += quantity_potions_bought
-    return {"total_potions_bought": total_potions, "total_gold_paid": 0}
+    with db.engine.begin() as connection:
+        for sku_name, cart_item in cart_ids.get(cart_id, {}).items():
+            # cart_item = sku_data.get("cart_item")
+            if cart_item is not None:
+                quantity_potions_bought = cart_item.quantity
+                total_potions += quantity_potions_bought
+                num_red_potions_have = connection.execute(sqlalchemy.text("SELECT num_red_potions FROM global_inventory")).first().num_red_potions
+                connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_red_potions = {num_red_potions_have - quantity_potions_bought}"))
+        
+    
+            
+    return cart_checkout.payment
+        # update the gold with total_gold_paid
+    # return {"total_potions_bought": total_potions, "total_gold_paid": 0}
