@@ -1,3 +1,7 @@
+# TODO:
+[ ] update ./src/api/admin.py reset function to also empty carts and set barrels to 0
+
+
 # Central Coast Cauldrons
 
 Central Coast Cauldrons is a stubbed out API meant to serve as a starting point for learning how to build backend servies that integrate with a persistance layer. You will progressively build out your own forked version of the API and integrate with a progressively more sophisticated database backend. When you register your backend at the [Consortium of Concotions and Charms](https://potion-exchange.vercel.app/) simulated customers will shop at your store using your API. 
