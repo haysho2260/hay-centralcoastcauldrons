@@ -76,6 +76,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         
     
             
-    return cart_checkout.payment
+    # return cart_checkout.payment
         # update the gold with total_gold_paid
-    # return {"total_potions_bought": total_potions, "total_gold_paid": 0}
+    return {"total_potions_bought": total_potions, "total_gold_paid": 0}

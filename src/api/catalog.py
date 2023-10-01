@@ -20,7 +20,7 @@ def get_catalog():
         # Execute SQL statement to get num of red potions
         result = connection.execute(sqlalchemy.text(sql))
         first_row = result.first()
-        num_red_potions_to_sell = first_row.num_red_potions()    
+        num_red_potions_to_sell = first_row.num_red_potions 
     
     # Can return a max of 20 items.
     return [

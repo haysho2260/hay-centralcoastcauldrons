@@ -20,11 +20,11 @@ def get_inventory():
         # Run the sql and returns a CursorResult object which represents the SQL results
         # Execute SQL statement to get num of red potions
         result = connection.execute(sqlalchemy.text(sql))
-        first_row = result.first()
-        num_red_potions_to_sell = first_row.num_red_potions() 
-        ml_in_bottles = first_row.num_red_potions() 
-        gold = first_row.num_red_potions() 
-    return {"number_of_potions": num_red_potions_to_sell, "ml_in_barrels": ml_in_bottles, "gold": gold}
+        first_row = result.fetchone()
+        num_red_potions_to_sell = first_row.num_red_potions
+        num_red_ml = first_row.num_red_ml
+        gold = first_row.gold
+    return {"number_of_potions": num_red_potions_to_sell, "ml_in_barrels": num_red_ml, "gold": gold}
 
 class Result(BaseModel):
     gold_match: bool

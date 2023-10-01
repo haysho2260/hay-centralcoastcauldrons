@@ -2,6 +2,7 @@
 [ ] update ./src/api/admin.py reset function to also empty carts and set barrels to 0
 [ ] figure out what payments/customer in carts.py
 [ ] parse payments in cart.py to get instructions on what to buy
+[ ] change in audit post_audit_results
 
 # Central Coast Cauldrons
 
