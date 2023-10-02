@@ -59,7 +59,7 @@ def get_bottle_plan():
         result = connection.execute(sqlalchemy.text("SELECT num_red_ml FROM global_inventory"))
     first_row = result.first()
     num_red_ml = first_row.num_red_ml
-    num_potions_bottle = num_red_ml / 100
+    num_potions_bottle = num_red_ml // 100
     
     return [
             {
