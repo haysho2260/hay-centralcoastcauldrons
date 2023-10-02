@@ -46,7 +46,8 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """If value not in local dict, add to local dict
     if value is in local dict, add quantity to existing value"""
-    cart_ids[cart_id][item_sku] = cart_item.quantity
+    # cart_ids[cart_id] = {item_sku: cart_item.quantity}
+    cart_ids[cart_id]={item_sku:cart_item.quantity}
 
     return "OK"
 
@@ -61,20 +62,24 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     # that returns a cart id in the response
     # then alice makes a post /carts/card_id/items/RED_POTIONS
     # in the body of this post the quanitiy
+    if cart_id not in cart_ids:
+        # If the cart_id doesn't exist, raise an HTTPException with a 404 status code
+        # and the "Cart not found" detail
+        raise HTTPException(status_code=404, detail="Cart not found")
+    
     total_potions = 0
-    print(f"cart checkout payment {cart_checkout.payment}")
-    if cart_id in cart_ids:
-        with db.engine.begin() as connection:
-            for sku, cart_data in cart_ids.items():
-                if cart_data != "cart_item":
-                    quantity_potions_bought = cart_data["RED_POTION"].quantity
+    
+    with db.engine.begin() as connection:
+        cart_data = cart_ids[cart_id]
+        for sku, cart_item_data in cart_data.items():
+            if sku != "new_cart":
+                if sku == "RED_POTION":
+                    quantity_potions_bought = cart_data[sku].quantity
                     if quantity_potions_bought > 0:
                         total_potions += quantity_potions_bought
                         num_red_potions_have = connection.execute(sqlalchemy.text("SELECT num_red_potions FROM global_inventory")).first().num_red_potions
                         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_red_potions = {num_red_potions_have - quantity_potions_bought}"))
-    else:
-        # Handle the case where the specified cart_id does not exist
-        raise HTTPException(status_code=404, detail="Cart not found")
+    
         
         
         
