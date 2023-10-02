@@ -67,7 +67,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         with db.engine.begin() as connection:
             for sku, cart_data in cart_ids.items():
                 if cart_data != "cart_item":
-                    quantity_potions_bought = sku.quantity
+                    quantity_potions_bought = cart_data.quantity
                     if quantity_potions_bought > 0:
                         total_potions += quantity_potions_bought
                         num_red_potions_have = connection.execute(sqlalchemy.text("SELECT num_red_potions FROM global_inventory")).first().num_red_potions
