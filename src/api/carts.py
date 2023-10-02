@@ -27,7 +27,7 @@ def create_cart(new_cart: NewCart):
     cart_id = random.randint(0, 2**32 - 1)
     while cart_id in cart_ids:
         cart_id = random.randint(0, 2**32 - 1)
-    cart_ids[cart_id]["new_cart"] = new_cart
+    cart_ids[cart_id] = {"new_cart":new_cart}
     return {"cart_id": cart_id}
 
 
