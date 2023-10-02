@@ -27,7 +27,7 @@ def create_cart(new_cart: NewCart):
     cart_id = random.randint(0, 2**32 - 1)
     while cart_id in cart_ids:
         cart_id = random.randint(0, 2**32 - 1)
-    cart_ids[cart_id] = {"cart":new_cart}
+    cart_ids[cart_id]["new_cart"] = new_cart
     return {"cart_id": cart_id}
 
 
@@ -65,12 +65,13 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     print(f"cart checkout payment {cart_checkout.payment}")
     if cart_id in cart_ids:
         with db.engine.begin() as connection:
-            for sku in cart_ids[cart_id]:
-                quantity_potions_bought = sku.quantity
-                if quantity_potions_bought > 0:
-                    total_potions += quantity_potions_bought
-                    num_red_potions_have = connection.execute(sqlalchemy.text("SELECT num_red_potions FROM global_inventory")).first().num_red_potions
-                    connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_red_potions = {num_red_potions_have - quantity_potions_bought}"))
+            for sku, cart_data in cart_ids.items():
+                if cart_data != "cart_item":
+                    quantity_potions_bought = sku.quantity
+                    if quantity_potions_bought > 0:
+                        total_potions += quantity_potions_bought
+                        num_red_potions_have = connection.execute(sqlalchemy.text("SELECT num_red_potions FROM global_inventory")).first().num_red_potions
+                        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_red_potions = {num_red_potions_have - quantity_potions_bought}"))
     else:
         # Handle the case where the specified cart_id does not exist
         raise HTTPException(status_code=404, detail="Cart not found")
