@@ -18,7 +18,8 @@ class PotionInventory(BaseModel):
 @router.post("/deliver")
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     """Updates in db how many bottles of red potions that we have"""
-    
+    # how do i know what potion ml I use
+        # in potion type first int is red_ml
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_red_potions FROM global_inventory")).first()
         for potion in potions_delivered:
