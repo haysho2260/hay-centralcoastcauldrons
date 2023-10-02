@@ -3,6 +3,7 @@
 [ ] figure out what payments/customer in carts.py
 [ ] parse payments in cart.py to get instructions on what to buy
 [ ] change in audit post_audit_results
+[ ] if doesn't exist send http error
 
 # Central Coast Cauldrons
 
