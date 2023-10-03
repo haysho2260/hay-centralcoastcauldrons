@@ -54,7 +54,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             if num_gold >= 10:
                 barrels_to_buy = num_gold // barrel.price
                 num_gold = num_gold - (barrels_to_buy * barrel.price)
-            plan.append({"sku":barrel.sku, "quanitity":barrels_to_buy})
+            plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})
             break
 
     return plan
