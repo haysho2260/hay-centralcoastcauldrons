@@ -71,14 +71,23 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     
     with db.engine.begin() as connection:
         cart_data = cart_ids[cart_id]
+        print(f"checkout: cart_data {cart_data}")
+        print(f"checkout: cart_id {cart_id}")
         for sku, cart_item_data in cart_data.items():
             if sku != "new_cart":
+                print(f"checkout: sku {sku}")
+                print(f"checkout: sku {sku}")
                 if sku == "RED_POTION":
                     quantity_potions_bought = cart_data[sku].quantity
+                    print(f"checkout: sku {sku}")
                     if quantity_potions_bought > 0:
+                        print(f"checkout: quantity_potions_bought {quantity_potions_bought}")
                         total_potions += quantity_potions_bought
+                        print(f"checkout: total_potions {total_potions}")
                         num_red_potions_have = connection.execute(sqlalchemy.text("SELECT num_red_potions FROM global_inventory")).first().num_red_potions
                         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_red_potions = {num_red_potions_have - quantity_potions_bought}"))
+                        print(f"checkout: num_red_potions_have {num_red_potions_have}")
+                        print(f"checkout: sku {sku}")
     
         
         

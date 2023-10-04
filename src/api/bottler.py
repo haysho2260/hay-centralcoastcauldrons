@@ -18,10 +18,13 @@ class PotionInventory(BaseModel):
 @router.post("/deliver")
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     """Updates in db how many bottles of red potions that we have"""
+    
+    print(f"potions_delivered {potions_delivered}")
     # how do i know what potion ml I use
         # in potion type first int is red_ml
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_red_potions FROM global_inventory")).first()
+        
         for potion in potions_delivered:
             ''' Update the amount of  num_red_ml'''
             # see how much red ml left
@@ -29,6 +32,10 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             # get subtracted amount of red ml
             num_red_ml_subtracted = 100 * potion.quantity
             # update the db with the new num_red_ml
+            
+            print(f"potion num_red_ml_have {num_red_ml_have}")
+            print(f"potion num_red_ml_subtracted {num_red_ml_subtracted}")
+            
             connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_red_ml = {num_red_ml_have - num_red_ml_subtracted}"))
             
             '''Update the amount of num_red_potions'''
@@ -37,6 +44,10 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             # get added amount of num_red_potions
             num_red_potions_added = potion.quantity
             # update the db with the new num_red_potions
+            
+            print(f"num_red_potions_have {num_red_potions_have}")
+            print(f"num_red_potions_added {num_red_potions_added}")
+            
             connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_red_potions = {num_red_potions_have + num_red_potions_added}"))
        
            
@@ -61,6 +72,9 @@ def get_bottle_plan():
     first_row = result.first()
     num_red_ml = first_row.num_red_ml
     num_potions_bottle = num_red_ml // 100
+    
+    print(f"num_red_ml {num_red_ml}")
+    print(f"num_potions_bottle {num_potions_bottle}")
     
     return [
             {

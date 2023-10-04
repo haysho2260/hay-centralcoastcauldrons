@@ -21,6 +21,7 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text(sql))
         first_row = result.first()
         num_red_potions_to_sell = first_row.num_red_potions 
+        print(f"get_catalog: num_red_potions_to_sell {num_red_potions_to_sell}")
     
     # Can return a max of 20 items.
     if num_red_potions_to_sell > 0:
