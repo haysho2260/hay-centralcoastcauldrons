@@ -47,30 +47,5 @@ def get_catalog():
         print(f"get_catalog: num_red_potions_to_sell {num_red_potions_to_sell}")
         print(f"get_catalog: num_green_potions_to_sell {num_green_potions_to_sell}")
         print(f"get_catalog: num_blue_potions_to_sell {num_blue_potions_to_sell}")
-    
-    # Can return a max of 20 items.
-    # if num_red_potions_to_sell > 0:
-    #     return [
-    #             {
-    #                 "sku": "RED_POTION_100",
-    #                 "name": "red potion",
-    #                 "quantity": num_red_potions_to_sell,
-    #                 "price": 50,
-    #                 "potion_type": [100, 0, 0, 0],
-    #             },
-    #             {
-    #                 "sku": "GREEN_POTION_100",
-    #                 "name": "green potion",
-    #                 "quantity": num_green_potions_to_sell,
-    #                 "price": 50,
-    #                 "potion_type": [0, 100, 0, 0],
-    #             },
-    #             {
-    #                 "sku": "BLUE_POTION_100",
-    #                 "name": "blue potion",
-    #                 "quantity": num_blue_potions_to_sell,
-    #                 "price": 50,
-    #                 "potion_type": [0, 0, 100, 0],
-    #             }
-    #         ]
+
     return catalog
