@@ -6,7 +6,6 @@ from src import database as db
 import random
 from src.api.temp_dict import cart_ids, catalog_dict
 from fastapi import HTTPException
-from src.api.catalog import get_catalog
 
 router = APIRouter(
     prefix="/carts",
@@ -115,7 +114,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         # check amount of gold have to increment later
         num_gold_have = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).first().gold
         # increment total gold paid in db
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {num_gold_have + quantity_potions_bought*total_gold_paid}"))
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {num_gold_have + total_gold_paid}"))
         print(f"checkout: gold_paid {total_gold_paid}")
         # print total potions bought but need to increment potions individually because diff colors
         print(f"checkout: total_potions_bought {total_potions_bought}")
