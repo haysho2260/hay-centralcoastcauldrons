@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
+from src.api.temp_dict import colors
 
 router = APIRouter(
     prefix="/admin",
@@ -16,10 +17,7 @@ def reset():
     Reset the game state. Gold goes to 100, all potions are removed from
     inventory, and all barrels are removed from inventory. Carts are all reset.
     """
-    # TODO: reset barrels from inventory, reset carts
     with db.engine.begin() as connection:
-        # update
-        colors = ["red", "green", "blue"]
         for color in colors: 
             connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_{color}_ml = 0"))
             connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_{color}_potions = 0"))
