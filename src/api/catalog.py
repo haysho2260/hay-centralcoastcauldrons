@@ -24,14 +24,14 @@ def get_catalog():
         first_row = result.first()
         if (num_red_potions_to_sell := first_row.num_red_potions) > 0:
             catalog.append({
-                    "sku": "RED_POTION_100",
+                    "sku": "RED_POTION",
                     "name": "red potion",
                     "quantity": num_red_potions_to_sell,
                     "price": 50,
                     "potion_type": [100, 0, 0, 0],
                 })
-            catalog_dict["RED_POTION_100"] = {
-                "sku": "RED_POTION_100",
+            catalog_dict["RED_POTION"] = {
+                "sku": "RED_POTION",
                 "name": "red potion",
                 "quantity": num_red_potions_to_sell,  # Assuming num_red_potions_to_sell is defined elsewhere
                 "price": 50,
@@ -39,14 +39,14 @@ def get_catalog():
             }
         if (num_green_potions_to_sell := first_row.num_green_potions) > 0:
             catalog.append({
-                    "sku": "GREEN_POTION_100",
+                    "sku": "GREEN_POTION",
                     "name": "green potion",
                     "quantity": num_green_potions_to_sell,
                     "price": 50,
                     "potion_type": [0, 100, 0, 0],
                 })
-            catalog_dict["GREEN_POTION_100"] = {
-                "sku": "GREEN_POTION_100",
+            catalog_dict["GREEN_POTION"] = {
+                "sku": "GREEN_POTION",
                 "name": "green potion",
                 "quantity": num_green_potions_to_sell,
                 "price": 50,
