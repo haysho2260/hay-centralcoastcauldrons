@@ -83,13 +83,15 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 print(f"checkout: sku {sku}")
                 
                 # pick which color loop is for
-                if sku == "RED_POTION":
+                if "red" in sku.lower():
                     color = "red"
-                elif sku == "GREEN_POTION":
+                elif "green" in sku.lower():
                     color = "green"
-                else:
+                elif "blue" in sku.lower():
                     color = "blue"
-                    
+                else:
+                    # consider returning error bc unaccounted for
+                    continue
                 # get f{color} quantity
                 quantity_potions_bought = cart_data[sku].quantity
                 print(f"checkout: quantity_potions_bought {quantity_potions_bought}")
@@ -101,7 +103,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     total_potions_bought += quantity_potions_bought
                     
                     # check how many potions we have
-                    num_potions_have = connection.execute(sqlalchemy.text(f"SELECT num_{color}_potions FROM global_inventory")).scalar
+                    num_potions_have = connection.execute(sqlalchemy.text(f"SELECT num_{color}_potions FROM global_inventory")).scalar()
                     
                     # sell/substract potions
                     connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_{color}_potions = {num_potions_have - quantity_potions_bought}"))
