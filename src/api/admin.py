@@ -17,8 +17,14 @@ def reset():
     inventory, and all barrels are removed from inventory. Carts are all reset.
     """
     # TODO: reset barrels from inventory, reset carts
-
-
+    with db.engine.begin() as connection:
+        # update
+        colors = ["red", "green", "blue"]
+        for color in colors: 
+            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_{color}_ml = 0"))
+            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_{color}_potions = 0"))
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = 100"))
+    return "OK"
 
 
 @router.get("/shop_info/")
