@@ -60,14 +60,14 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     plan = []
     with db.engine.begin() as connection:
         num_gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
-        print(f"get_wholesale_purchase_plan: num_gold {num_gold}")
+        print(f"get_wholesale_purchase_plan: num_gold to begin with {num_gold}")
         while num_gold > 0:
             for barrel in wholesale_catalog:
                 barrels_to_buy = 1
                 if num_gold - barrel.price > 0:
                         barrels_to_buy = num_gold // barrel.price
                         num_gold = num_gold - (barrels_to_buy * barrel.price)
-                        print(f"get_wholesale_purchase_plan: num_gold {num_gold}")
+                        print(f"get_wholesale_purchase_plan: before buying num_gold {num_gold}")
                         print(f"get_wholesale_purchase_plan: barrels_to_buy {barrels_to_buy}")
                         plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})
     ''' 
