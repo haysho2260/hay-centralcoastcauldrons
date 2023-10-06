@@ -67,10 +67,14 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 barrels_to_buy = 1
                 if num_gold - barrel.price > 0:
                         barrels_to_buy = num_gold // barrel.price
+                        if barrels_to_buy > barrel.quantity:
+                            barrels_to_buy = barrel.quantity
                         num_gold = num_gold - (barrels_to_buy * barrel.price)
+                        barrel.quantity -= 1
                         print(f"get_wholesale_purchase_plan: before buying num_gold {num_gold}")
                         print(f"get_wholesale_purchase_plan: barrels_to_buy {barrels_to_buy}")
                         plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})
+
     ''' 
     future plan look at barrel with smallest ml
     buy that, see if that makes ml equal then loop through selling the rest starting at what has the least ml/what we just refilled
