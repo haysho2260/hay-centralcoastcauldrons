@@ -51,8 +51,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
             print(f"post_deliver_barrels: num_gold_have {num_gold_have}")
             print(f"post_deliver_barrels: num_gold_used for {color} barrels {num_gold_used}")
            
-        
-    print(barrels_delivered)
+    print(f"post_deliver_barrels: list of barrels_delivered {barrels_delivered}")
     return "OK"
 
 # Gets called once a day
@@ -60,19 +59,21 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     plan = []
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory"))
-    first_row = result.first()
-    num_gold = first_row.gold
-    print(f"get_wholesale_purchase_plan: num_gold {num_gold}")
-    for barrel in wholesale_catalog:
-        barrels_to_buy = 0
-        if barrel.sku == "SMALL_RED_BARREL":
-            if num_gold >= 10:
-                barrels_to_buy = num_gold // barrel.price
-                num_gold = num_gold - (barrels_to_buy * barrel.price)
-                print(f"get_wholesale_purchase_plan: num_gold {num_gold}")
-                print(f"get_wholesale_purchase_plan: barrels_to_buy {barrels_to_buy}")
-                plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})
+        num_gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
+        print(f"get_wholesale_purchase_plan: num_gold {num_gold}")
+        while num_gold > 0:
+            for barrel in wholesale_catalog:
+                barrels_to_buy = 1
+                if num_gold - barrel.price > 0:
+                        barrels_to_buy = num_gold // barrel.price
+                        num_gold = num_gold - (barrels_to_buy * barrel.price)
+                        print(f"get_wholesale_purchase_plan: num_gold {num_gold}")
+                        print(f"get_wholesale_purchase_plan: barrels_to_buy {barrels_to_buy}")
+                        plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})
+    ''' 
+    future plan look at barrel with smallest ml
+    buy that, see if that makes ml equal then loop through selling the rest starting at what has the least ml/what we just refilled
+    '''
             
 
     return plan
