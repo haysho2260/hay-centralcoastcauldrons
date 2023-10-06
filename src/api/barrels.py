@@ -23,7 +23,7 @@ class Barrel(BaseModel):
 
 @router.post("/deliver")
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
-    
+    print(f"post_deliver_barrels: barrels_delivered {barrels_delivered}")
     with db.engine.begin() as connection:
         for barrel in barrels_delivered:
 
@@ -58,6 +58,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     plan = []
+    print(f"get_wholesale_purchase_plan: wholesale_catalog {wholesale_catalog}")
     with db.engine.begin() as connection:
         num_gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
         print(f"get_wholesale_purchase_plan: num_gold to begin with {num_gold}")
