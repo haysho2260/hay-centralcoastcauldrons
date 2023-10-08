@@ -18,24 +18,24 @@ def get_inventory():
     total_potions = 0
     total_ml = 0
     for color in colors:
-            # Define the SQL query with placeholders for color
-            sql = """
-                SELECT num_{}_ml, num_{}_potions FROM global_inventory
-            """
+        # Define the SQL query with placeholders for color
+        sql = """
+            SELECT num_{}_ml, num_{}_potions FROM global_inventory
+        """
 
-            # Replace the placeholders with the actual color value
-            formatted_sql = sql.format(color, color)
+        # Replace the placeholders with the actual color value
+        formatted_sql = sql.format(color, color)
 
-            # Execute the query
-            # see how much num_ml & num_potions we have
-            with db.engine.begin() as connection:
-                num_ml_have, num_potions_have = connection.execute(sqlalchemy.text(formatted_sql)).first()
+        # Execute the query
+        # see how much num_ml & num_potions we have
+        with db.engine.begin() as connection:
+            num_ml_have, num_potions_have = connection.execute(sqlalchemy.text(formatted_sql)).first()
+        
+            print(f"get_inventory: potion num_{color}_ml_have {num_ml_have}")
+            print(f"get_inventory: potion num_{color}_potions_have {num_potions_have}")
             
-                print(f"get_inventory: potion num_{color}_ml_have {num_ml_have}")
-                print(f"get_inventory: potion num_{color}_potions_have {num_potions_have}")
-                
-                total_potions += num_potions_have
-                total_ml += num_ml_have
+            total_potions += num_potions_have
+            total_ml += num_ml_have
     
     print(f"get_inventory: total_potions {total_potions}")
     print(f"get_inventory: total_ml {total_ml}")       
