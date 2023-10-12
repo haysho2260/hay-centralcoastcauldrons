@@ -24,34 +24,40 @@ class Barrel(BaseModel):
 @router.post("/deliver")
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
     print(f"post_deliver_barrels: barrels_delivered {barrels_delivered}")
+    gold_paid = 0
+    red_ml = 0
+    blue_ml = 0
+    green_ml = 0
+    dark_ml = 0
+    
+    for barrel_delivered in barrels_delivered:
+        gold_paid += barrel_delivered.price * barrel_delivered.quantity
+        if barrel_delivered.potion_type == [1,0,0,0]:
+            red_ml += barrel_delivered.ml_per_barrel * barrel_delivered.quantity
+        elif barrel_delivered.potion_type == [0,1,0,0]:
+            blue_ml += barrel_delivered.ml_per_barrel * barrel_delivered.quantity
+        elif barrel_delivered.potion_type == [0,0,1,0]:
+            green_ml += barrel_delivered.ml_per_barrel * barrel_delivered.quantity
+        elif barrel_delivered.potion_type == [0,0,0,1]:
+            dark_ml += barrel_delivered.ml_per_barrel * barrel_delivered.quantity
+        else:
+            raise Exception("Invalid potion type")
+    print(f"post_deliver_barrels -- gold paid: {gold_paid}; red_ml: {red_ml}; blue_ml: {blue_ml}; green_ml: {green_ml}; dark_ml: {dark_ml} ")
+    
     with db.engine.begin() as connection:
-        for barrel in barrels_delivered:
-
-            if "red" in barrel.sku.lower():
-                color = "red"
-            elif "green" in barrel.sku.lower():
-                color = "green"
-            elif "blue" in barrel.sku.lower():
-                color = "blue"
-            else:
-                raise HTTPException(status_code=404, detail=f"{barrel.sku} barrel not found")
-            # see how much red ml left
-            num_ml_have = connection.execute(sqlalchemy.text("SELECT num_{color}_ml FROM global_inventory")).scalar()
-            # add amount of red ml
-            num_ml_added = barrel.ml_per_barrel * barrel.quantity
-            # update in db
-            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_{color}_ml = {num_ml_have + num_ml_added}"))
-            # find amount gold, find amount used, update db
-            num_gold_have = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).first().gold
-            num_gold_used = barrel.price * barrel.quantity
-            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {num_gold_have -  num_gold_used}"))
-            
-            print(f"post_deliver_barrels: num_{color}_ml_have {num_ml_have}")
-            print(f"post_deliver_barrels: num_{color}_ml_added {num_ml_added}")
-            print(f"post_deliver_barrels: num_gold_have {num_gold_have}")
-            print(f"post_deliver_barrels: num_gold_used for {color} barrels {num_gold_used}")
-           
-    print(f"post_deliver_barrels: list of barrels_delivered {barrels_delivered}")
+        connection.execute(
+            sqlalchemy.text(
+                """
+                UPDATE global_inventory
+                red_ml = red_ml + :red_ml
+                green_ml = green_ml + :green_ml
+                blue_ml = blue_ml + :blue_ml
+                dark_ml = dark_ml + :dark_ml
+                gold = gold + :gold_paid
+                """
+            ),
+            [{"red_ml": red_ml, "green_ml": green_ml, "blue_ml": blue_ml, "dark_ml": dark_ml, "gold_paid": gold_paid}]
+        )
     return "OK"
 
 # Gets called once a day
@@ -62,7 +68,10 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     plan = []
     print(f"get_wholesale_purchase_plan: wholesale_catalog {wholesale_catalog}")
     with db.engine.begin() as connection:
-        num_gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
+        result = connection.execute(
+            sqlalchemy.text("SELECT gold, red_ml, green_ml, blue_ml, dark_ml FROM global_inventory")
+        ).first()
+        num_gold, red_ml, green_ml, blue_ml, dark_ml = result        
         print(f"get_wholesale_purchase_plan: num_gold to begin with {num_gold}")
         while num_gold > 0:
             for barrel in wholesale_catalog:
