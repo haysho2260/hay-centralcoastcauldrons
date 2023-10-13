@@ -4,7 +4,6 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 import random
-from src.api.temp_dict import cart_ids, catalog_dict
 from fastapi import HTTPException
 
 router = APIRouter(
@@ -21,23 +20,50 @@ class NewCart(BaseModel):
 
 @router.post("/")
 def create_cart(new_cart: NewCart):
-    """generates a very large number and 
-    assigns that to be an id if not in
-    cart_ids"""
+    # has supabase autogenerate id and return it
     print(f"create_cart: new_cart {new_cart}")
-    cart_id = random.randint(0, 2**32 - 1)
-    while cart_id in cart_ids:
-        cart_id = random.randint(0, 2**32 - 1)
-    cart_ids[cart_id] = {"new_cart":new_cart}
+    sql=f"""INSERT INTO public.cart (cart_id, customer_name) VALUES (DEFAULT, {new_cart.customer})"""
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql))
+        cart_id = result.inserted_primary_key[0]
+        print(f"create_cart: cart_id {cart_id}")
     return {"cart_id": cart_id}
 
 
 @router.get("/{cart_id}")
 def get_cart(cart_id: int):
-    """returns dictionary definition(?) from cart_ids"""
+    """Retrieve cart item information based on the provided cart_id."""
+    
+    result = {}
 
-    print(f"get_cart: cart_id{cart_id}")
-    return cart_ids[cart_id]
+    sql = sqlalchemy.text(
+        """
+        SELECT ci.quantity, ci.sku, pc.price
+        FROM cart_items AS ci
+        JOIN potions_catalog AS pc ON ci.sku = pc.sku
+        WHERE ci.cart_id = :cart_id
+        """
+    ).bindparams(cart_id=cart_id)
+    try:
+        with db.engine.begin() as connection:
+            result = connection.execute(sql)
+            rows = result.fetchall()
+        
+        if rows:
+            for row in rows:
+                result[row["sku"]] = {
+                    "quantity_want": row["quantity"],
+                    "price_per": row["price"]
+                }
+                print(f"get_cart: quantity_want {row['quantity']}")
+                print(f"get_cart: sku {row['sku']}")
+            return result
+    except Exception as e:
+        # Handle exceptions, such as database errors
+        error_message = f"An error occurred: {str(e)}"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
 
 
 class CartItem(BaseModel):
@@ -48,9 +74,21 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """If value not in local dict, add to local dict
     if value is in local dict, add quantity to existing value"""
-    cart_ids[cart_id]={item_sku:cart_item.quantity}
-    print(f"get_cart: cart_id{cart_id}")
-    return "OK"
+    
+    try:
+        sql=f"""
+            INSERT INTO public.cart_items 
+            (cart_item_id, cart_id, created_at, quantity, sku) 
+            VALUES (DEFAULT, {cart_id}, DEFAULT, 
+            {cart_item.quantity},{item_sku})
+        """
+        with db.engine.begin() as connection:
+            connection.execute(sqlalchemy.text(sql))
+        return "OK"
+    except Exception as e:
+        # Handle exceptions, such as database errors
+        error_message = f"An error occurred: {str(e)}"
+        raise HTTPException(status_code=500, detail=error_message)
 
 
 class CartCheckout(BaseModel):
@@ -58,67 +96,28 @@ class CartCheckout(BaseModel):
 
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
-    # update database and deduct number of potions that were bought and incerase
-    # Alice makes a post to /carts
-    # that returns a cart id in the response
-    # then alice makes a post /carts/card_id/items/RED_POTIONS
-    # in the body of this post the quanitiy
-    if cart_id not in cart_ids:
-        # If the cart_id doesn't exist, raise an HTTPException with a 404 status code
-        # and the "Cart not found" detail
-        raise HTTPException(status_code=404, detail="Cart not found")
-    
+    # update gold paid and count num bought
     total_potions_bought = 0
     total_gold_paid = 0
     
-    with db.engine.begin() as connection:
-        cart_data = get_cart(cart_id)
-        print(f"checkout: cart_data {cart_data}")
-        print(f"checkout: cart_id {cart_id}")
-        
-        
-        
-        for sku, cart_item_data in cart_data.items():
-            if sku != "new_cart": # it can be customer as well
-                print(f"checkout: sku {sku}")
-                
-                # pick which color loop is for
-                if "red" in sku.lower():
-                    color = "red"
-                elif "green" in sku.lower():
-                    color = "green"
-                elif "blue" in sku.lower():
-                    color = "blue"
-                else:
-                    # consider returning error bc unaccounted for
-                    continue
-                # get f{color} quantity
-                quantity_potions_bought = cart_data[sku].quantity
-                print(f"checkout: quantity_potions_bought {quantity_potions_bought}")
-                
-                # update values if {color} potion was bought
-                if quantity_potions_bought > 0:
-                    
-                    # increment total potions if quantity bought is more than 0
-                    total_potions_bought += quantity_potions_bought
-                    
-                    # check how many potions we have
-                    num_potions_have = connection.execute(sqlalchemy.text(f"SELECT num_{color}_potions FROM global_inventory")).scalar()
-                    
-                    # sell/substract potions
-                    connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_{color}_potions = {num_potions_have - quantity_potions_bought}"))
-                    print(f"checkout: num_{color}_potions_have {num_potions_have}")
+    cart_items = get_cart(cart_id)
+    for sku, cart_data in cart_items.items():
+        total_gold_paid += cart_data["price_per"]
+        total_potions_bought += cart_data["quantity_want"]
 
-                    # get amount of gold paid for {color} potion and amount gold * quantity bought to total
-                    gold_paid += catalog_dict["sku"]["price"] * quantity_potions_bought
-                    print(f"checkout: gold_paid for {sku, catalog_dict['sku']['price']}")
-        
-        # check amount of gold have to increment later
-        num_gold_have = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).first().gold
-        # increment total gold paid in db
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {num_gold_have + total_gold_paid}"))
-        print(f"checkout: gold_paid {total_gold_paid}")
-        # print total potions bought but need to increment potions individually because diff colors
-        print(f"checkout: total_potions_bought {total_potions_bought}")
+    # add gold paid quantities
+    sql = sqlalchemy.text(
+        """
+        -- Update global inventory
+        UPDATE global_inventory
+        SET gold = gold + :gold_paid;
+        """
+    ).bindparams(cart_id=cart_id)
+
+    with db.engine.begin() as connection:
+        connection.execute(sql)
+    print(f"checkout: cart_checkout {cart_checkout}")
+    print(f"checkout: gold_paid {total_gold_paid}")
+    print(f"checkout: total_potions_bought {total_potions_bought}")
     
     return {"total_potions_bought": total_potions_bought, "total_gold_paid": total_gold_paid}
