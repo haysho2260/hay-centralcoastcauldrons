@@ -21,7 +21,7 @@ def reset():
         connection.execute("DROP TABLE IF EXISTS cart, cart_items, global_inventory, potions_catalog CASCADE")
 
         # Recreate tables based on schema.sql
-        with open("schema.sql", "r") as schema_file:
+        with open("../../schema.sql", "r") as schema_file:
             schema_sql = schema_file.read()
             connection.execute(schema_sql)
     return "OK"
