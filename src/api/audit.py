@@ -4,7 +4,6 @@ from src.api import auth
 import math
 import sqlalchemy
 from src import database as db
-from src.api.temp_dict import colors
 from fastapi import HTTPException
 
 router = APIRouter(
@@ -15,33 +14,21 @@ router = APIRouter(
 
 @router.get("/inventory")
 def get_inventory():
-    total_potions = 0
-    total_ml = 0
-    for color in colors:
-        # Define the SQL query with placeholders for color
-        sql = """
-            SELECT num_{}_ml, num_{}_potions FROM global_inventory
-        """
 
-        # Replace the placeholders with the actual color value
-        formatted_sql = sql.format(color, color)
-
-        # Execute the query
-        # see how much num_ml & num_potions we have
-        with db.engine.begin() as connection:
-            num_ml_have, num_potions_have = connection.execute(sqlalchemy.text(formatted_sql)).first()
-        
-            print(f"get_inventory: potion num_{color}_ml_have {num_ml_have}")
-            print(f"get_inventory: potion num_{color}_potions_have {num_potions_have}")
-            
-            total_potions += num_potions_have
-            total_ml += num_ml_have
+    # Define the SQL query with placeholders for color
+    sql = """
+        SELECT num_red_ml + num_green_ml + num_blue_ml + num_dark_ml AS total_ml, gold FROM global_inventory;
+        SELECT SUM(quantity) AS total_potions FROM potion_catalog
+    """
+    # Execute the query
+    # see how much num_ml & num_potions we have
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql)).first()
     
-    print(f"get_inventory: total_potions {total_potions}")
-    print(f"get_inventory: total_ml {total_ml}")       
-    gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
-    print(f"get_inventory: gold {gold}")
-    return {"number_of_potions": total_potions, "ml_in_barrels": total_ml, "gold": gold}
+        print(f"get_inventory: total_ml {result.total_ml}")
+        print(f"get_inventory: total_potions {result.total_potions}")
+
+    return {"number_of_potions": result.total_potions, "ml_in_barrels": result.total_ml, "gold": result.gold}
 
 class Result(BaseModel):
     gold_match: bool
