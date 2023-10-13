@@ -15,16 +15,16 @@ router = APIRouter(
 
 class NewCart(BaseModel):
     customer: str
-    
 
 
 @router.post("/")
 def create_cart(new_cart: NewCart):
     # has supabase autogenerate id and return it
     print(f"create_cart: new_cart {new_cart}")
-    sql=f"""INSERT INTO public.cart (cart_id, customer_name) VALUES (DEFAULT, {new_cart.customer})"""
+    sql = "INSERT INTO public.cart (cart_id, customer_name) VALUES (DEFAULT, :customer_name)"
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql))
+        result = connection.execute(sqlalchemy.text(
+            sql), [{"customer_name": new_cart.customer}])
         cart_id = result.inserted_primary_key[0]
         print(f"create_cart: cart_id {cart_id}")
     return {"cart_id": cart_id}
@@ -33,7 +33,7 @@ def create_cart(new_cart: NewCart):
 @router.get("/{cart_id}")
 def get_cart(cart_id: int):
     """Retrieve cart item information based on the provided cart_id."""
-    
+
     result = {}
 
     sql = sqlalchemy.text(
@@ -43,12 +43,12 @@ def get_cart(cart_id: int):
         JOIN potions_catalog AS pc ON ci.sku = pc.sku
         WHERE ci.cart_id = :cart_id
         """
-    ).bindparams(cart_id=cart_id)
+    ), [{"cart_id": cart_id}]
     try:
         with db.engine.begin() as connection:
             result = connection.execute(sql)
             rows = result.fetchall()
-        
+
         if rows:
             for row in rows:
                 result[row["sku"]] = {
@@ -64,8 +64,6 @@ def get_cart(cart_id: int):
         raise HTTPException(status_code=500, detail=error_message)
 
 
-
-
 class CartItem(BaseModel):
     quantity: int
 
@@ -74,16 +72,16 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """If value not in local dict, add to local dict
     if value is in local dict, add quantity to existing value"""
-    
+
     try:
-        sql=f"""
+        sql = sqlalchemy.text("""
             INSERT INTO public.cart_items 
             (cart_item_id, cart_id, created_at, quantity, sku) 
-            VALUES (DEFAULT, {cart_id}, DEFAULT, 
-            {cart_item.quantity},{item_sku})
-        """
+            VALUES (DEFAULT, :cart_id, DEFAULT, 
+            :cart_item.quantity,:item_sku)
+        """), [{"cart_id": cart_id, "cart_item.quantity": cart_item.quantity, "item_sku": item_sku}]
         with db.engine.begin() as connection:
-            connection.execute(sqlalchemy.text(sql))
+            connection.execute(sql)
         return "OK"
     except Exception as e:
         # Handle exceptions, such as database errors
@@ -94,12 +92,13 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
 class CartCheckout(BaseModel):
     payment: str
 
+
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     # update gold paid and count num bought
     total_potions_bought = 0
     total_gold_paid = 0
-    
+
     cart_items = get_cart(cart_id)
     for sku, cart_data in cart_items.items():
         total_gold_paid += cart_data["price_per"]
@@ -112,12 +111,12 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         UPDATE global_inventory
         SET gold = gold + :gold_paid;
         """
-    ).bindparams(cart_id=cart_id)
+    ), [{"cart_id": cart_id}]
 
     with db.engine.begin() as connection:
         connection.execute(sql)
     print(f"checkout: cart_checkout {cart_checkout}")
     print(f"checkout: gold_paid {total_gold_paid}")
     print(f"checkout: total_potions_bought {total_potions_bought}")
-    
+
     return {"total_potions_bought": total_potions_bought, "total_gold_paid": total_gold_paid}

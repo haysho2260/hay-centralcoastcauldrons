@@ -18,7 +18,7 @@ def reset():
     """
     with db.engine.begin() as connection:
         # Drop existing tables
-        connection.execute("DROP TABLE IF EXISTS cart, cart_items, global_inventory, potions_catalog CASCADE")
+        connection.execute("TRUNCATE cart, cart_items, global_inventory, potions_catalog CASCADE")
 
         # Recreate tables based on schema.sql
         with open("../../schema.sql", "r") as schema_file:
