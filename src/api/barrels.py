@@ -65,7 +65,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     
     ''' consider duplicating wholesale_catalog to track how much can buy while iterating '''
-    plan = []
+    # plan = []
     print(f"get_wholesale_purchase_plan: wholesale_catalog {wholesale_catalog}")
     with db.engine.begin() as connection:
         result = connection.execute(
@@ -73,18 +73,31 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         ).first()
         num_gold, red_ml, green_ml, blue_ml, dark_ml = result        
         print(f"get_wholesale_purchase_plan: num_gold to begin with {num_gold}")
+        for barrel in wholesale_catalog:
+            if barrel.sku == "SMALL_RED_BARREL":
+                price_red = barrel.price
+            elif barrel.sku == "SMALL_GREEN_BARREL":
+                price_green = barrel.price
+        num_red_barrel = 0
+        num_green_barrel = 0
         while num_gold > 0:
-            for barrel in wholesale_catalog:
-                barrels_to_buy = 1
-                if num_gold - barrel.price > 0:
-                        barrels_to_buy = num_gold // barrel.price
-                        if barrels_to_buy > barrel.quantity:
-                            barrels_to_buy = barrel.quantity
-                        num_gold = num_gold - (barrels_to_buy * barrel.price)
-                        barrel.quantity -= 1
-                        print(f"get_wholesale_purchase_plan: before buying num_gold {num_gold}")
-                        print(f"get_wholesale_purchase_plan: barrels_to_buy {barrels_to_buy}")
-                        plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})
+            if red_ml > green_ml and price_green <= num_gold:
+                num_gold -= price_green
+            if red_ml < green_ml and price_red <= num_gold:
+                num_gold -= price_red
+            print(f"get_wholesale_purchase_plan: before buying num_gold {num_gold}")
+            # print(f"get_wholesale_purchase_plan: barrels_to_buy {barrels_to_buy}")
+    return [
+        {
+            "sku":"SMALL_RED_BARREL",
+            "quantity":num_red_barrel
+        },
+        {
+            "sku":"SMALL_GREEN_BARREL",
+            "quantity":num_green_barrel
+        }
+    ]
+        # plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})
 
     ''' 
     future plan look at barrel with smallest ml
@@ -92,4 +105,4 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     '''
             
 
-    return plan
+    # return plan
