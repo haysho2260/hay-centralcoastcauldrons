@@ -1,8 +1,7 @@
 from fastapi import APIRouter
 import sqlalchemy
 from src import database as db
-from src.api.temp_dict import catalog_dict
-
+import json
 router = APIRouter()
 
 
@@ -26,11 +25,12 @@ def get_catalog():
         result = connection.execute(select_statement)
         rows = result.fetchall()
         for row in rows:
+            
             catalog.append({
                 "sku": row.sku,
-                "name": row.name,
+                "name": row.sku,
                 "quantity": row.quantity,
                 "price": row.price,
-                "potion_type": [row.red, row.green, row.blue, row.dark],
+                "potion_type": json.loads(row.sku)
             })
     return catalog
