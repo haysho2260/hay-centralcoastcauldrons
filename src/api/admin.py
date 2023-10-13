@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
-from src.api.temp_dict import colors
 
 router = APIRouter(
     prefix="/admin",
@@ -18,10 +17,13 @@ def reset():
     inventory, and all barrels are removed from inventory. Carts are all reset.
     """
     with db.engine.begin() as connection:
-        for color in colors: 
-            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_{color}_ml = 0"))
-            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_{color}_potions = 0"))
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = 100"))
+        # Drop existing tables
+        connection.execute("DROP TABLE IF EXISTS cart, cart_items, global_inventory, potions_catalog CASCADE")
+
+        # Recreate tables based on schema.sql
+        with open("schema.sql", "r") as schema_file:
+            schema_sql = schema_file.read()
+            connection.execute(schema_sql)
     return "OK"
 
 
