@@ -22,7 +22,7 @@ def get_inventory():
     # see how much num_ml & num_potions we have
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql1)).first()
-        total_potions = connection.execute(sqlalchemy.text(sql2)).scalar()
+        total_potions = connection.execute(sqlalchemy.text(sql2)).scalar_one()
     
         print(f"get_inventory: total_ml {result.total_ml}")
         print(f"get_inventory: total_potions {total_potions}")

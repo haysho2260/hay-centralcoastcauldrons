@@ -1,3 +1,5 @@
+DROP TABLE potions_catalog;
+
 create table
   public.potions_catalog (
     sku text not null,
@@ -10,9 +12,11 @@ create table
 
 -- Insert the initial rows
 INSERT INTO public.potions_catalog (sku, quantity, price)
-VALUES ('[50,50,0,0]', 0, 1),
-       ('[0,50,50,0]', 0, 1),
-       ('[50,0,50,0]', 0, 1);
+VALUES ('[50_50_0_0]', 0, 50),
+    ('[0_50_50_0]', 0, 50),
+    ('[50_0_50_0]', 0, 50),
+    ('[100_0_0_0]', 0, 50),
+    ('[0_100_0_0]', 0, 50),
 
 create table
   public.global_inventory (
@@ -24,6 +28,11 @@ create table
     num_dark_ml integer not null default 0,
     constraint global_inventory_pkey primary key (id)
   ) tablespace pg_default;
+
+    
+-- Insert the global_inventory
+INSERT INTO public.global_inventory (num_red_ml, num_green_ml, num_blue_ml, num_dark_ml, gold)
+VALUES (0, 0, 0, 0, 100)
 
 create table
   public.cart_items (

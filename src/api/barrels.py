@@ -49,10 +49,11 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
             sqlalchemy.text(
                 """
                 UPDATE global_inventory
-                red_ml = red_ml + :red_ml
-                green_ml = green_ml + :green_ml
-                blue_ml = blue_ml + :blue_ml
-                dark_ml = dark_ml + :dark_ml
+                SET 
+                num_red_ml = num_red_ml + :red_ml,
+                num_green_ml = num_green_ml + :green_ml,
+                num_blue_ml = num_blue_ml + :blue_ml,
+                num_dark_ml = num_dark_ml + :dark_ml,
                 gold = gold + :gold_paid
                 """
             ),
@@ -68,11 +69,19 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     # plan = []
     print(f"get_wholesale_purchase_plan: wholesale_catalog {wholesale_catalog}")
     with db.engine.begin() as connection:
-        result = connection.execute(
-            sqlalchemy.text("SELECT gold, red_ml, green_ml, blue_ml, dark_ml FROM global_inventory")
+        result_global_inventory = connection.execute(
+            sqlalchemy.text("SELECT gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory")
         ).first()
-        num_gold, red_ml, green_ml, blue_ml, dark_ml = result        
+
+        num_gold = result_global_inventory[0]  # Access the first column (gold)
+        red_ml = result_global_inventory[1]     # Access the second column (num_red_ml)
+        green_ml = result_global_inventory[2]   # Access the third column (num_green_ml)
+        blue_ml = result_global_inventory[3]    # Access the fourth column (num_blue_ml)
+        dark_ml = result_global_inventory[4]    # Access the fifth column (num_dark_ml)      
         print(f"get_wholesale_purchase_plan: num_gold to begin with {num_gold}")
+        
+        
+        price_red = price_green = -1
         for barrel in wholesale_catalog:
             if barrel.sku == "SMALL_RED_BARREL":
                 price_red = barrel.price
@@ -80,21 +89,23 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 price_green = barrel.price
         num_red_barrel = 0
         num_green_barrel = 0
-        while num_gold > 0:
+        while num_gold - price_green >= 0 or num_gold - price_green >= 0:
             if red_ml > green_ml and price_green <= num_gold:
                 num_gold -= price_green
-            if red_ml < green_ml and price_red <= num_gold:
+                num_green_barrel += 1
+            if red_ml <= green_ml and price_red <= num_gold:
                 num_gold -= price_red
-            print(f"get_wholesale_purchase_plan: before buying num_gold {num_gold}")
+                num_red_barrel += 1
+    print(f"get_wholesale_purchase_plan: after buying num_gold {num_gold}")
             # print(f"get_wholesale_purchase_plan: barrels_to_buy {barrels_to_buy}")
     return [
         {
             "sku":"SMALL_RED_BARREL",
-            "quantity":num_red_barrel
+            "quantity": num_red_barrel
         },
         {
             "sku":"SMALL_GREEN_BARREL",
-            "quantity":num_green_barrel
+            "quantity": num_green_barrel
         }
     ]
         # plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})

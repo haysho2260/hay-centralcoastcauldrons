@@ -5,6 +5,7 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 from fastapi import HTTPException
+from .catalog import potion_to_sku
 
 router = APIRouter(
     prefix="/bottler",
@@ -20,21 +21,37 @@ class PotionInventory(BaseModel):
 
 @router.post("/deliver")
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
+    print(f"post_deliver_bottles: potions_delivered {potions_delivered}")
     """Updates in db how many bottles of potions that we have"""
     # subtract quantities
     try:
         for potion in potions_delivered:
-            sql = sqlalchemy.text(
-                """
-                -- Update potion catalog
-                UPDATE potion_catalog
-                SET quantity = quantity - :quantity
-                WHERE potion_type = :potion_type;
-                """
-            )[{"quantity": potion.quantity, "potion_type": str(potion.potion_type)}]
-
+            # Update potion catalog
             with db.engine.begin() as connection:
-                connection.execute(sql)
+                connection.execute(
+                    sqlalchemy.text(
+                        """
+                        UPDATE potions_catalog
+                        SET quantity = quantity + :quantity
+                        WHERE sku = :potion_type;
+                        """
+                    ),
+                    [{"quantity": potion.quantity,
+                        "potion_type": potion_to_sku(potion.potion_type)}]
+                )
+                connection.execute(
+                    sqlalchemy.text(
+                        """
+                        UPDATE global_inventory
+                        SET num_red_ml = num_red_ml - :red_ml,
+                            num_green_ml = num_green_ml - :green_ml,
+                            num_blue_ml = num_blue_ml - :blue_ml,
+                            num_dark_ml = num_dark_ml - :dark_ml
+                        """
+                    ),
+                    [{"red_ml": potion.potion_type[0], "green_ml": potion.potion_type[1],
+                        "blue_ml": potion.potion_type[2], "dark_ml": potion.potion_type[3]}]
+                )
         print(potions_delivered)
 
         return "OK"
@@ -67,8 +84,25 @@ def get_bottle_plan():
                 "potion_type": [50, 50, 0, 0],
                 "quantity": min(red//50, green // 50),
             })
-        else:
-            raise HTTPException(
-                status_code=500, detail="Bug in looping through colors")
+        elif red >= 300:
+            result.append({
+                "potion_type": [100, 0, 0, 0],
+                "quantity": 2,
+            })
+        elif red < 300 and red > 0:
+            result.append({
+                "potion_type": [100, 0, 0, 0],
+                "quantity": 1,
+            })
+        elif green >= 300:
+            result.append({
+                "potion_type": [0, 100, 0, 0],
+                "quantity": 2,
+            })
+        elif green < 300 and green > 0:
+            result.append({
+                "potion_type": [0, 100, 0, 0],
+                "quantity": 1,
+            })
 
     return result
