@@ -66,7 +66,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     
     ''' consider duplicating wholesale_catalog to track how much can buy while iterating '''
-    # plan = []
+    plan = []
     print(f"get_wholesale_purchase_plan: wholesale_catalog {wholesale_catalog}")
     with db.engine.begin() as connection:
         result_global_inventory = connection.execute(
@@ -81,39 +81,42 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         print(f"get_wholesale_purchase_plan: num_gold to begin with {num_gold}")
         
         
-        price_red = price_green = -1
+        price_red = -1
+        price_green = -1
+        quantity_red = 0
+        quantity_green = 0
         for barrel in wholesale_catalog:
             if barrel.sku == "SMALL_RED_BARREL":
                 price_red = barrel.price
+                quantity_red = barrel.quantity
             elif barrel.sku == "SMALL_GREEN_BARREL":
                 price_green = barrel.price
+                quantity_green = barrel.quantity
         num_red_barrel = 0
         num_green_barrel = 0
         while num_gold - price_green >= 0 or num_gold - price_green >= 0:
-            if red_ml > green_ml and price_green <= num_gold:
+            if red_ml > green_ml and price_green <= num_gold and num_green_barrel < quantity_green:
                 num_gold -= price_green
                 num_green_barrel += 1
-            if red_ml <= green_ml and price_red <= num_gold:
+            if red_ml <= green_ml and price_red <= num_gold and num_red_barrel < quantity_red:
                 num_gold -= price_red
                 num_red_barrel += 1
     print(f"get_wholesale_purchase_plan: after buying num_gold {num_gold}")
             # print(f"get_wholesale_purchase_plan: barrels_to_buy {barrels_to_buy}")
-    return [
-        {
+    if num_red_barrel > 0:
+        plan.append({
             "sku":"SMALL_RED_BARREL",
             "quantity": num_red_barrel
-        },
-        {
+        })
+    if num_green_barrel > 0:
+        plan.append({
             "sku":"SMALL_GREEN_BARREL",
             "quantity": num_green_barrel
-        }
-    ]
+        })
+    return plan
         # plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})
 
     ''' 
     future plan look at barrel with smallest ml
     buy that, see if that makes ml equal then loop through selling the rest starting at what has the least ml/what we just refilled
     '''
-            
-
-    # return plan
