@@ -88,13 +88,17 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         for barrel in wholesale_catalog:
             if barrel.sku == "SMALL_RED_BARREL":
                 price_red = barrel.price
+                print(f"get_wholesale_purchase_plan: price_red {price_red}")
                 quantity_red = barrel.quantity
+                print(f"get_wholesale_purchase_plan: quantity_red {quantity_red}")
             elif barrel.sku == "SMALL_GREEN_BARREL":
                 price_green = barrel.price
+                print(f"get_wholesale_purchase_plan: price_green {price_green}")
                 quantity_green = barrel.quantity
+                print(f"get_wholesale_purchase_plan: quantity_green {quantity_green}")
         num_red_barrel = 0
         num_green_barrel = 0
-        while num_gold - price_green >= 0 or num_gold - price_green >= 0:
+        while num_gold - price_green >= 0 or num_gold - price_red >= 0:
             if red_ml > green_ml and price_green <= num_gold and num_green_barrel < quantity_green:
                 num_gold -= price_green
                 num_green_barrel += 1

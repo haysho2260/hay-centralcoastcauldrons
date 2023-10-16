@@ -49,8 +49,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                             num_dark_ml = num_dark_ml - :dark_ml
                         """
                     ),
-                    [{"red_ml": potion.potion_type[0], "green_ml": potion.potion_type[1],
-                        "blue_ml": potion.potion_type[2], "dark_ml": potion.potion_type[3]}]
+                    [{"red_ml": potion.potion_type[0] * potion.quantity, "green_ml": potion.potion_type[1] * potion.quantity,
+                        "blue_ml": potion.potion_type[2] * potion.quantity, "dark_ml": potion.potion_type[3] * potion.quantity}]
                 )
         print(potions_delivered)
 
@@ -84,25 +84,31 @@ def get_bottle_plan():
                 "potion_type": [50, 50, 0, 0],
                 "quantity": min(red//50, green // 50),
             })
+            red -= min(red//50, green // 50)
+            green -= min(red//50, green // 50)
         elif red >= 300:
             result.append({
                 "potion_type": [100, 0, 0, 0],
                 "quantity": 2,
             })
+            red -= 2
         elif red < 300 and red > 0:
             result.append({
                 "potion_type": [100, 0, 0, 0],
                 "quantity": 1,
             })
+            red -= 1
         elif green >= 300:
             result.append({
                 "potion_type": [0, 100, 0, 0],
                 "quantity": 2,
             })
+            green -= 2
         elif green < 300 and green > 0:
             result.append({
                 "potion_type": [0, 100, 0, 0],
                 "quantity": 1,
             })
+            green -= 1
 
     return result
