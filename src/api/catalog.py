@@ -6,11 +6,12 @@ router = APIRouter()
 
 
 def sku_to_potion(sku):
-    return [int(x) for x in sku[1:-1].split('_')]
+    parts = sku.split('_')
+    return [int(x) for x in parts if x]
 
 
 def potion_to_sku(potion):
-    return f"[{'_'.join(map(str, potion))}]"
+    return '_'.join(map(str, potion))
 
 
 @router.get("/catalog/", tags=["catalog"])
