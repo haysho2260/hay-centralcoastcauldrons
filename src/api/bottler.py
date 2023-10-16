@@ -5,7 +5,7 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 from fastapi import HTTPException
-from .catalog import potion_to_sku
+from .catalog import potion_to_sku, sku_to_potion
 
 router = APIRouter(
     prefix="/bottler",
@@ -79,34 +79,38 @@ def get_bottle_plan():
     with db.engine.begin() as connection:
         red, green = connection.execute(sqlalchemy.text(
             "SELECT num_red_ml, num_green_ml FROM global_inventory")).first()
+        
+        result = connection.execute(sqlalchemy.text("SELECT sku FROM potions_catalog")).fetchall()
+        potion_dict = {row.sku: sku_to_potion(row.sku) for row in result}
+        
         if red >= 50 and green >= 50:
             result.append({
-                "potion_type": [50, 50, 0, 0],
+                "potion_type": potion_dict["50_50_0_0"],
                 "quantity": min(red//50, green // 50),
             })
             red -= min(red//50, green // 50)
             green -= min(red//50, green // 50)
         elif red >= 300:
             result.append({
-                "potion_type": [100, 0, 0, 0],
+                "potion_type": potion_dict["100_0_0_0"],
                 "quantity": 2,
             })
             red -= 2
         elif red < 300 and red > 0:
             result.append({
-                "potion_type": [100, 0, 0, 0],
+                "potion_type": potion_dict["100_0_0_0"],
                 "quantity": 1,
             })
             red -= 1
         elif green >= 300:
             result.append({
-                "potion_type": [0, 100, 0, 0],
+                "potion_type": potion_dict["0_100_0_0"],
                 "quantity": 2,
             })
             green -= 2
         elif green < 300 and green > 0:
             result.append({
-                "potion_type": [0, 100, 0, 0],
+                "potion_type": potion_dict["0_100_0_0"],
                 "quantity": 1,
             })
             green -= 1
