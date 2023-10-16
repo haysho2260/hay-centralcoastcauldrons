@@ -26,12 +26,12 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text("SELECT sku, quantity, price FROM potions_catalog"))
         rows = result.fetchall()
         for row in rows:
- 
-            catalog.append({
-                "sku": row.sku,
-                "name": row.sku,
-                "quantity": row.quantity,
-                "price": row.price,
-                "potion_type": sku_to_potion(row.sku)
-            })
+            if row.quantity > 0:
+                catalog.append({
+                    "sku": row.sku,
+                    "name": row.sku,
+                    "quantity": row.quantity,
+                    "price": row.price,
+                    "potion_type": sku_to_potion(row.sku)
+                })
     return catalog
