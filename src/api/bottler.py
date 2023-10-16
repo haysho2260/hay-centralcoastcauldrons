@@ -80,8 +80,10 @@ def get_bottle_plan():
         red, green = connection.execute(sqlalchemy.text(
             "SELECT num_red_ml, num_green_ml FROM global_inventory")).first()
         
-        result = connection.execute(sqlalchemy.text("SELECT sku FROM potions_catalog")).fetchall()
-        potion_dict = {row.sku: sku_to_potion(row.sku) for row in result}
+        result = connection.execute(sqlalchemy.text("SELECT sku FROM potions_catalog")).all()
+        potion_dict = {}
+        for row in result:
+            potion_dict[row.sku] = sku_to_potion(row.sku)
         
         if red >= 50 and green >= 50:
             result.append({
