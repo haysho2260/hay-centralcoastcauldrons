@@ -79,42 +79,53 @@ def get_bottle_plan():
     with db.engine.begin() as connection:
         red, green = connection.execute(sqlalchemy.text(
             "SELECT num_red_ml, num_green_ml FROM global_inventory")).first()
-        
-        result = connection.execute(sqlalchemy.text("SELECT sku FROM potions_catalog")).all()
-        potion_dict = {}
-        for row in result:
-            potion_dict[row.sku] = sku_to_potion(row.sku)
-        
-        if red >= 50 and green >= 50:
-            result.append({
-                "potion_type": potion_dict["50_50_0_0"],
-                "quantity": min(red//50, green // 50),
-            })
-            red -= min(red//50, green // 50)
-            green -= min(red//50, green // 50)
-        elif red >= 300:
-            result.append({
-                "potion_type": potion_dict["100_0_0_0"],
-                "quantity": 2,
-            })
-            red -= 2
-        elif red < 300 and red > 0:
-            result.append({
-                "potion_type": potion_dict["100_0_0_0"],
-                "quantity": 1,
-            })
-            red -= 1
-        elif green >= 300:
-            result.append({
-                "potion_type": potion_dict["0_100_0_0"],
-                "quantity": 2,
-            })
-            green -= 2
-        elif green < 300 and green > 0:
-            result.append({
-                "potion_type": potion_dict["0_100_0_0"],
-                "quantity": 1,
-            })
-            green -= 1
+        result.append({
+            "potion_type": [100,0,0,0],
+            "quantity": 2,
+        })
+        # result = connection.execute(sqlalchemy.text("SELECT sku, quantity FROM potions_catalog")).all()
+        # potion_list = {}
+        # for row in result:
+        #     potion_list.sku = sku_to_potion(row.sku)
+        # for sku in potion_list:
+            
+        # if red >= 50 and green >= 50:
+        #     potion_type = 
+        #     result.append({
+        #         "potion_type": potion_dict["50_50_0_0"],
+        #         "quantity": min(red//50, green // 50),
+        #     })   
+        #     red                
+        # if red >= 50 and green >= 50:
+        #     result.append({
+        #         "potion_type": potion_dict["50_50_0_0"],
+        #         "quantity": min(red//50, green // 50),
+        #     })
+        #     red -= min(red//50, green // 50)
+        #     green -= min(red//50, green // 50)
+        # elif red >= 300:
+        #     result.append({
+        #         "potion_type": potion_dict["100_0_0_0"],
+        #         "quantity": 2,
+        #     })
+        #     red -= 2
+        # elif red < 300 and red > 0:
+        #     result.append({
+        #         "potion_type": potion_dict["100_0_0_0"],
+        #         "quantity": 1,
+        #     })
+        #     red -= 1
+        # elif green >= 300:
+        #     result.append({
+        #         "potion_type": potion_dict["0_100_0_0"],
+        #         "quantity": 2,
+        #     })
+        #     green -= 2
+        # elif green < 300 and green > 0:
+        #     result.append({
+        #         "potion_type": potion_dict["0_100_0_0"],
+        #         "quantity": 1,
+        #     })
+        #     green -= 1
 
     return result
