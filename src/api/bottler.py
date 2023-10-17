@@ -74,58 +74,34 @@ def get_bottle_plan():
 
     # Initial logic: bottle all barrels into red potions.
 
-    result = []
+    plan = []
 
     with db.engine.begin() as connection:
-        red, green = connection.execute(sqlalchemy.text(
-            "SELECT num_red_ml, num_green_ml FROM global_inventory")).first()
-        result.append({
-            "potion_type": [100,0,0,0],
-            "quantity": 2,
-        })
-        # result = connection.execute(sqlalchemy.text("SELECT sku, quantity FROM potions_catalog")).all()
-        # potion_list = {}
-        # for row in result:
-        #     potion_list.sku = sku_to_potion(row.sku)
-        # for sku in potion_list:
-            
-        # if red >= 50 and green >= 50:
-        #     potion_type = 
-        #     result.append({
-        #         "potion_type": potion_dict["50_50_0_0"],
-        #         "quantity": min(red//50, green // 50),
-        #     })   
-        #     red                
-        # if red >= 50 and green >= 50:
-        #     result.append({
-        #         "potion_type": potion_dict["50_50_0_0"],
-        #         "quantity": min(red//50, green // 50),
-        #     })
-        #     red -= min(red//50, green // 50)
-        #     green -= min(red//50, green // 50)
-        # elif red >= 300:
-        #     result.append({
-        #         "potion_type": potion_dict["100_0_0_0"],
-        #         "quantity": 2,
-        #     })
-        #     red -= 2
-        # elif red < 300 and red > 0:
-        #     result.append({
-        #         "potion_type": potion_dict["100_0_0_0"],
-        #         "quantity": 1,
-        #     })
-        #     red -= 1
-        # elif green >= 300:
-        #     result.append({
-        #         "potion_type": potion_dict["0_100_0_0"],
-        #         "quantity": 2,
-        #     })
-        #     green -= 2
-        # elif green < 300 and green > 0:
-        #     result.append({
-        #         "potion_type": potion_dict["0_100_0_0"],
-        #         "quantity": 1,
-        #     })
-        #     green -= 1
+        colors = connection.execute(sqlalchemy.text(
+            "SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory")).first()
+        print(f"get_bottle_plan: colors {colors}")
+        result = connection.execute(sqlalchemy.text("SELECT sku, quantity FROM potions_catalog")).all()
+        for row in result:
+            potion_type = sku_to_potion(row.sku)
+            quantity_potions = row.quantity
+            print(f"get_bottle_plan: potion_type{potion_type}, quantity_potions {quantity_potions}")
+            ml_in_potions = []
+            for i in range(0, len(potion_type)):
+                if potion_type[i] > 0:
+                   ml_in_potions.append(colors[i]//potion_type[i]) 
+            print(min(potion_type))
+            if quantity_potions > 0:
+                print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottled {0}")
+            else:
+                if (potion_type[0] <= colors.num_red_ml 
+                    and potion_type[1] <= colors.num_green_ml 
+                    and potion_type[2] <= colors.num_blue_ml 
+                    and potion_type[3] <= colors.num_dark_ml):
+                    quantity_bottling = min(potion_type) // 2
+                    print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
+                    plan.append({
+                        "potion_type": potion_type,
+                        "quantity": quantity_bottling
+                    })
 
-    return result
+    return plan
