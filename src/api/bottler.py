@@ -93,7 +93,11 @@ def get_bottle_plan():
             if quantity_potions > 0:
                 print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottled {0}")
             else:
-                if (potion_type[0] <= colors.num_red_ml 
+                if (potion_type[0] < 100
+                    and potion_type[1] < 100
+                    and potion_type[2] < 100
+                    and potion_type[3] < 100
+                    and potion_type[0] <= colors.num_red_ml 
                     and potion_type[1] <= colors.num_green_ml 
                     and potion_type[2] <= colors.num_blue_ml 
                     and potion_type[3] <= colors.num_dark_ml):
