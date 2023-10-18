@@ -48,16 +48,13 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE global_inventory
-                SET 
-                num_red_ml = num_red_ml + :red_ml,
-                num_green_ml = num_green_ml + :green_ml,
-                num_blue_ml = num_blue_ml + :blue_ml,
-                num_dark_ml = num_dark_ml + :dark_ml,
-                gold = gold - :gold_paid
+                INSERT INTO global_inventory
+                (num_red_ml, num_green_ml, num_blue_ml, num_dark_ml, gold)
+                VALUES 
+                (:red_ml, :green_ml, :blue_ml, :dark_ml, - :gold_paid)
                 """
             ),
-            [{"red_ml": red_ml, "green_ml": green_ml, "blue_ml": blue_ml, "dark_ml": dark_ml, "gold_paid": gold_paid}]
+            {"red_ml": red_ml, "green_ml": green_ml, "blue_ml": blue_ml, "dark_ml": dark_ml, "gold_paid": gold_paid}
         )
     return "OK"
 
@@ -70,7 +67,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(f"get_wholesale_purchase_plan: wholesale_catalog {wholesale_catalog}")
     with db.engine.begin() as connection:
         result_global_inventory = connection.execute(
-            sqlalchemy.text("SELECT gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory")
+            sqlalchemy.text("""
+                SELECT SUM(gold) AS gold, 
+                SUM(num_red_ml) AS num_red_ml, 
+                SUM(num_green_ml) AS num_green_ml, 
+                SUM(num_blue_ml) AS num_blue_ml, 
+                SUM(num_dark_ml) AS num_dark_ml 
+                FROM global_inventory""")
         ).first()
 
         num_gold = result_global_inventory[0]  # Access the first column (gold)
