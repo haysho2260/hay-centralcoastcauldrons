@@ -16,7 +16,7 @@ router = APIRouter(
 def get_inventory():
 
     # Define the SQL query with placeholders for color
-    sql1 = "SELECT num_red_ml + num_green_ml + num_blue_ml + num_dark_ml AS total_ml, gold FROM global_inventory;"
+    sql1 = "SELECT SUM(num_red_ml + num_green_ml + num_blue_ml + num_dark_ml) AS total_ml, SUM(gold) AS sum_gold FROM global_inventory;"
     sql2 = "SELECT SUM(quantity) AS total_potions FROM potions_catalog;"
     # Execute the query
     # see how much num_ml & num_potions we have
@@ -27,7 +27,7 @@ def get_inventory():
         print(f"get_inventory: total_ml {result.total_ml}")
         print(f"get_inventory: total_potions {total_potions}")
 
-    return {"number_of_potions": total_potions, "ml_in_barrels": result.total_ml, "gold": result.gold}
+    return {"number_of_potions": total_potions, "ml_in_barrels": result.total_ml, "gold": result.sum_gold}
 
 class Result(BaseModel):
     gold_match: bool
