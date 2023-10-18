@@ -23,14 +23,16 @@ def get_catalog():
 
     # Execute the select statement and fetch all rows
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT sku, quantity, price FROM potions_catalog"))
+        result = connection.execute(sqlalchemy.text("""
+            SELECT sku, SUM(quantity) AS sum_quantity, price FROM potions_catalog
+        """))
         rows = result.fetchall()
         for row in rows:
             if row.quantity > 0:
                 catalog.append({
                     "sku": row.sku,
                     "name": row.sku,
-                    "quantity": row.quantity,
+                    "quantity": row.sum_quantity,
                     "price": row.price,
                     "potion_type": sku_to_potion(row.sku)
                 })
