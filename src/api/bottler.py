@@ -78,7 +78,11 @@ def get_bottle_plan():
 
     with db.engine.begin() as connection:
         colors = connection.execute(sqlalchemy.text(
-            "SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory")).first()
+            """SELECT SUM(num_red_ml) AS num_red_ml, 
+            SUM(num_green_ml) AS num_green_ml, 
+            SUM(num_blue_ml) AS num_blue_ml, 
+            SUM(num_dark_ml) AS num_dark_ml
+            FROM global_inventory""")).first()
         print(f"get_bottle_plan: colors {colors}")
         result = connection.execute(sqlalchemy.text("SELECT sku, quantity FROM potions_catalog")).all()
         for row in result:
@@ -93,11 +97,7 @@ def get_bottle_plan():
             if quantity_potions > 0:
                 print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottled {0}")
             else:
-                if (potion_type[0] < 100
-                    and potion_type[1] < 100
-                    and potion_type[2] < 100
-                    and potion_type[3] < 100
-                    and potion_type[0] <= colors.num_red_ml 
+                if (potion_type[0] <= colors.num_red_ml 
                     and potion_type[1] <= colors.num_green_ml 
                     and potion_type[2] <= colors.num_blue_ml 
                     and potion_type[3] <= colors.num_dark_ml):
