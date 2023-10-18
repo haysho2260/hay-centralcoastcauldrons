@@ -101,7 +101,7 @@ def get_bottle_plan():
                     and potion_type[1] <= colors.num_green_ml 
                     and potion_type[2] <= colors.num_blue_ml 
                     and potion_type[3] <= colors.num_dark_ml):
-                    quantity_bottling = min(potion_type) // 2
+                    quantity_bottling = min(potion_type) % 3
                     print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
                     plan.append({
                         "potion_type": potion_type,
