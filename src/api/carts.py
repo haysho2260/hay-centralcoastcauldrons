@@ -4,6 +4,7 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 import random
+from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 
 router = APIRouter(
@@ -92,29 +93,22 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             
             # update current gold available
             connection.execute(sqlalchemy.text("""
-                UPDATE global_inventory
-                SET gold = gold + :total_gold_paid
-                """),
-                {"total_gold_paid": result.total_gold_paid}
-            )
+                INSERT INTO global_inventory (gold, checked_out)
+                VALUES (:total_gold_paid, TRUE);
+            """), {"total_gold_paid": result.total_gold_paid})
             # update number of potions in inventory
             connection.execute(sqlalchemy.text("""
-                UPDATE potions_catalog AS pc
-                SET quantity = pc.quantity - ci.quantity
+                INSERT INTO potions_catalog (quantity, sku)
+                SELECT -ci.quantity, ci.sku
                 FROM cart_items AS ci
-                WHERE ci.cart_id = :cart_id
-                AND pc.sku = ci.sku;
+                WHERE ci.cart_id = :cart_id;
                 """),
                 {"cart_id": cart_id}
             )
-
-
-
-
         print(f"get_cart: total_gold_paid {result.total_gold_paid}")
         print(f"get_cart: total_potions_bought {result.total_potions_bought}")
         return {"total_potions_bought": result.total_potions_bought, "total_gold_paid": result.total_gold_paid}
-    except Exception as e:
+    except IntegrityError as e:
         # Handle exceptions, such as database errors
         error_message = f"An error occurred: {str(e)}"
         raise HTTPException(status_code=500, detail=error_message)
