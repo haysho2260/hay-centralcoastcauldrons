@@ -24,11 +24,11 @@ def reset():
         connection.execute(sqlalchemy.text("""
             -- Insert the initial rows
             INSERT INTO public.potions_catalog (sku, quantity, price)
-            VALUES ('50_50_0_0', 0, 1),
-                ('0_50_50_0', 0, 1),
-                ('50_0_50_0', 0, 1),
-                ('100_0_0_0', 0, 50),
-                ('0_100_0_0', 0, 50);
+            VALUES ('50_50_0_0', 1),
+                ('0_50_50_0', 1),
+                ('50_0_50_0', 1),
+                ('100_0_0_0', 50),
+                ('0_100_0_0', 50),
         """))
         connection.execute(sqlalchemy.text("""
             -- Insert the initial rows for global
