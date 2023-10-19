@@ -30,7 +30,7 @@ def get_catalog():
         """))
         rows = result.fetchall()
         for row in rows:
-            if row.quantity > 0:
+            if row.sum_quantity > 0:
                 catalog.append({
                     "sku": row.sku,
                     "name": row.sku,
