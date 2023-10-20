@@ -31,12 +31,12 @@ def get_catalog():
         """))
         rows = result.fetchall()
         for row in rows:
-             if row['sum_quantity'] > 0:
+             if row.sum_quantity > 0:
                 catalog.append({
-                    "sku": row['sku'],
-                    "name": row['sku'],  # You can adjust 'name' as needed
-                    "quantity": row['sum_quantity'],
-                    "price": row['price'],
-                    "potion_type": sku_to_potion(row['sku'])
+                    "sku": row.sku,
+                    "name": row.sku,  # You can adjust 'name' as needed
+                    "quantity": row.sum_quantity,
+                    "price": row.price,
+                    "potion_type": sku_to_potion(row.sku)
                 })
     return catalog

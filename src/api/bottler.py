@@ -75,7 +75,7 @@ def get_bottle_plan():
 
     # Initial logic: bottle all barrels into red potions.
 
-    plan = []
+    
 
     with db.engine.begin() as connection:
         colors = connection.execute(sqlalchemy.text(
@@ -85,28 +85,33 @@ def get_bottle_plan():
             COALESCE(SUM(num_dark_ml),0) AS num_dark_ml
             FROM global_inventory""")).first()
         print(f"get_bottle_plan: colors {colors}")
-        result = connection.execute(sqlalchemy.text("SELECT sku, quantity FROM potions_inventory")).all()
-        for row in result:
-            potion_type = sku_to_potion(row.sku)
-            quantity_potions = row.quantity
-            print(f"get_bottle_plan: potion_type{potion_type}, quantity_potions {quantity_potions}")
-            ml_in_potions = []
-            for i in range(0, len(potion_type)):
-                if potion_type[i] > 0:
-                   ml_in_potions.append(colors[i]//potion_type[i]) 
-            print(min(potion_type))
-            if quantity_potions > 0:
-                print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottled {0}")
-            else:
-                if (potion_type[0] <= colors.num_red_ml 
-                    and potion_type[1] <= colors.num_green_ml 
-                    and potion_type[2] <= colors.num_blue_ml 
-                    and potion_type[3] <= colors.num_dark_ml):
-                    quantity_bottling = 1
-                    print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
-                    plan.append({
-                        "potion_type": potion_type,
-                        "quantity": quantity_bottling
-                    })
+        result = connection.execute(sqlalchemy.text("""
+            SELECT sku, SUM(quantity) AS sum_quantity
+            FROM potions_inventory
+            GROUP BY sku;
+            """)).all()
+        plan=mix_potions(colors.num_red_ml, colors.num_green_ml, colors.num_blue_ml, colors.num_dark_ml, result)
+        
 
     return plan
+
+def mix_potions(num_red_ml, num_green_ml, num_blue_ml, num_dark_ml,result):
+    plan = []
+    for row in result:
+        potion_type = sku_to_potion(row.sku)
+        quantity_potions = row.quantity
+        print(f"get_bottle_plan: potion_type{potion_type}, quantity_potions {quantity_potions}")
+
+        if quantity_potions > 0:
+            print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottled {0}")
+        else:
+            if (potion_type[0] <= num_red_ml 
+                and potion_type[1] <= num_green_ml 
+                and potion_type[2] <= num_blue_ml 
+                and potion_type[3] <= num_dark_ml):
+                quantity_bottling = 1
+                print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
+                plan.append({
+                    "potion_type": potion_type,
+                    "quantity": quantity_bottling
+                })

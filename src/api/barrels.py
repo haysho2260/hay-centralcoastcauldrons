@@ -51,7 +51,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                 INSERT INTO global_inventory
                 (num_red_ml, num_green_ml, num_blue_ml, num_dark_ml, gold)
                 VALUES 
-                (:red_ml, :green_ml, :blue_ml, :dark_ml, - :gold_paid)
+                (:red_ml, :green_ml, :blue_ml, :dark_ml, -:gold_paid)
                 """
             ),
             {"red_ml": red_ml, "green_ml": green_ml, "blue_ml": blue_ml, "dark_ml": dark_ml, "gold_paid": gold_paid}
