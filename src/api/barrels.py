@@ -68,11 +68,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     with db.engine.begin() as connection:
         result_global_inventory = connection.execute(
             sqlalchemy.text("""
-                SELECT SUM(gold) AS gold, 
-                SUM(num_red_ml) AS num_red_ml, 
-                SUM(num_green_ml) AS num_green_ml, 
-                SUM(num_blue_ml) AS num_blue_ml, 
-                SUM(num_dark_ml) AS num_dark_ml 
+                SELECT COALESCE(SUM(gold),0) AS gold, 
+                COALESCE(SUM(num_red_ml),0) AS num_red_ml, 
+                COALESCE(SUM(num_green_ml),0) AS num_green_ml, 
+                COALESCE(SUM(num_blue_ml),0) AS num_blue_ml, 
+                COALESCE(SUM(num_dark_ml),0) AS num_dark_ml 
                 FROM global_inventory""")
         ).first()
 
@@ -88,6 +88,10 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         price_green = -1
         quantity_red = 0
         quantity_green = 0
+        price_blue = -1
+        price_dark = -1
+        quantity_blue = 0
+        quantity_dark = 0
         for barrel in wholesale_catalog:
             if barrel.sku == "SMALL_RED_BARREL":
                 price_red = barrel.price
@@ -99,6 +103,16 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 print(f"get_wholesale_purchase_plan: price_green {price_green}")
                 quantity_green = barrel.quantity
                 print(f"get_wholesale_purchase_plan: quantity_green {quantity_green}")
+            elif barrel.sku == "SMALL_BLUE_BARREL":
+                price_blue = barrel.price
+                print(f"get_wholesale_purchase_plan: price_blue {price_blue}")
+                quantity_blue = barrel.quantity
+                print(f"get_wholesale_purchase_plan: quantity_blue {quantity_blue}")
+            elif barrel.sku == "SMALL_DARK_BARREL":
+                price_dark = barrel.price
+                print(f"get_wholesale_purchase_plan: price_dark {price_dark}")
+                quantity_dark = barrel.quantity
+                print(f"get_wholesale_purchase_plan: quantity_dark {quantity_dark}")
         num_red_barrel = 0
         num_green_barrel = 0
         while num_gold - price_green >= 0 or num_gold - price_red >= 0:

@@ -31,13 +31,14 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                 connection.execute(
                     sqlalchemy.text(
                         """
-                        UPDATE potions_catalog
-                        SET quantity = quantity + :quantity
-                        WHERE sku = :potion_type;
+                        INSERT INTO potions_catalog
+                        (quantity, sku, )
+                        VALUES (:quantity, :sku, price)
+                        WHERE sku = :sku;
                         """
                     ),
-                    [{"quantity": potion.quantity,
-                        "potion_type": potion_to_sku(potion.potion_type)}]
+                    [{"quantity": -potion.quantity,
+                        "sku": potion_to_sku(potion.potion_type)}]
                 )
                 connection.execute(
                     sqlalchemy.text(
@@ -78,10 +79,10 @@ def get_bottle_plan():
 
     with db.engine.begin() as connection:
         colors = connection.execute(sqlalchemy.text(
-            """SELECT SUM(num_red_ml) AS num_red_ml, 
-            SUM(num_green_ml) AS num_green_ml, 
-            SUM(num_blue_ml) AS num_blue_ml, 
-            SUM(num_dark_ml) AS num_dark_ml
+            """SELECT COALESCE((num_red_ml),0) AS num_red_ml, 
+            COALESCE(SUM(num_green_ml),0) AS num_green_ml, 
+            COALESCE(SUM(num_blue_ml),0) AS num_blue_ml, 
+            COALESCE(SUM(num_dark_ml),0) AS num_dark_ml
             FROM global_inventory""")).first()
         print(f"get_bottle_plan: colors {colors}")
         result = connection.execute(sqlalchemy.text("SELECT sku, quantity FROM potions_catalog")).all()

@@ -24,9 +24,9 @@ def get_catalog():
     # Execute the select statement and fetch all rows
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("""
-            SELECT pi.sku, pc.price, SUM(pi.quantity) AS sum_quantity
+            SELECT pi.sku, pc.price, COALESCE(SUM(pi.quantity),0) AS sum_quantity
             FROM potions_inventory AS pi
-            JOIN potions_catalog AS pc ON pi.sku = pc.sku
+            LEFT JOIN potions_catalog AS pc ON pi.sku = pc.sku
             GROUP BY pi.sku, pc.price;
         """))
         rows = result.fetchall()

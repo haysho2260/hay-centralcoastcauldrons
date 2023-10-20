@@ -80,8 +80,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 sqlalchemy.text(
                     """
                     SELECT 
-                        SUM(cart_items.quantity * potions_catalog.price) AS total_gold_paid,
-                        SUM(cart_items.quantity) AS total_potions_bought
+                        COALESCE(SUM(cart_items.quantity * potions_catalog.price),0) AS total_gold_paid,
+                        COALESCE(SUM(cart_items.quantity),0) AS total_potions_bought
                     FROM 
                         cart_items
                     JOIN

@@ -16,8 +16,8 @@ router = APIRouter(
 def get_inventory():
 
     # Define the SQL query with placeholders for color
-    sql1 = "SELECT SUM(num_red_ml + num_green_ml + num_blue_ml + num_dark_ml) AS total_ml, SUM(gold) AS sum_gold FROM global_inventory;"
-    sql2 = "SELECT SUM(quantity) AS total_potions FROM potions_inventory;"
+    sql1 = "SELECT COALESCE(SUM(num_red_ml + num_green_ml + num_blue_ml + num_dark_ml),0) AS total_ml, COALESCE(SUM(gold),0) AS sum_gold FROM global_inventory;"
+    sql2 = "SELECT COALESCE(SUM(quantity),0) AS total_potions FROM potions_inventory;"
     # Execute the query
     # see how much num_ml & num_potions we have
     with db.engine.begin() as connection:
