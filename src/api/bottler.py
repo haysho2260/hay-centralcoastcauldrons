@@ -85,7 +85,7 @@ def get_bottle_plan():
             COALESCE(SUM(num_dark_ml),0) AS num_dark_ml
             FROM global_inventory""")).first()
         print(f"get_bottle_plan: colors {colors}")
-        result = connection.execute(sqlalchemy.text("SELECT sku, quantity FROM potions_catalog")).all()
+        result = connection.execute(sqlalchemy.text("SELECT sku, quantity FROM potions_inventory")).all()
         for row in result:
             potion_type = sku_to_potion(row.sku)
             quantity_potions = row.quantity

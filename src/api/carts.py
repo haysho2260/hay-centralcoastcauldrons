@@ -17,7 +17,7 @@ router = APIRouter(
 class NewCart(BaseModel):
     customer: str
 
-
+# no unit test for create cart
 @router.post("/")
 def create_cart(new_cart: NewCart):
     # has supabase autogenerate id and return it
@@ -98,7 +98,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             """), {"total_gold_paid": result.total_gold_paid})
             # update number of potions in inventory
             connection.execute(sqlalchemy.text("""
-                INSERT INTO potions_catalog (quantity, sku)
+                INSERT INTO potions_inventory (quantity, sku)
                 SELECT -ci.quantity, ci.sku
                 FROM cart_items AS ci
                 WHERE ci.cart_id = :cart_id;
