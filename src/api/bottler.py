@@ -79,7 +79,7 @@ def get_bottle_plan():
 
     with db.engine.begin() as connection:
         colors = connection.execute(sqlalchemy.text(
-            """SELECT COALESCE((num_red_ml),0) AS num_red_ml, 
+            """SELECT COALESCE(SUM(num_red_ml),0) AS num_red_ml, 
             COALESCE(SUM(num_green_ml),0) AS num_green_ml, 
             COALESCE(SUM(num_blue_ml),0) AS num_blue_ml, 
             COALESCE(SUM(num_dark_ml),0) AS num_dark_ml
