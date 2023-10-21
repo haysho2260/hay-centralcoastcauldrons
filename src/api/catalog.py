@@ -29,7 +29,7 @@ def get_catalog():
             LEFT JOIN potions_catalog AS pc ON pi.sku = pc.sku
             GROUP BY pi.sku, pc.price;
         """))
-        rows = result.fetchall()
+        rows = result.all()
         for row in rows:
              if row.sum_quantity > 0:
                 catalog.append({

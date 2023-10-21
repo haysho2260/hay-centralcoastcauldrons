@@ -30,6 +30,12 @@ def create_cart(new_cart: NewCart):
     with db.engine.begin() as connection:
         cart_id = connection.execute(sqlalchemy.text(
             sql), [{"customer_name": new_cart.customer}]).scalar_one()
+        connection.execute(sqlalchemy.text(
+            """
+            INSERT INTO public.checkout (cart_id) 
+            VALUES (:cart_id)
+            """
+            ),{"cart_id":cart_id})
         print(f"create_cart: cart_id {cart_id}")
     return {"cart_id": cart_id}
 
@@ -75,6 +81,23 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     try:
         with db.engine.begin() as connection:
+            # check if checked out previously
+            recent_checked_out = connection.execute(sqlalchemy.text("""
+                SELECT checked_out
+                FROM checkout
+                WHERE cart_id = :cart_id
+                ORDER BY created_at DESC
+                LIMIT 1
+            """), {"cart_id": cart_id}).scalar()
+            if recent_checked_out:
+                # If already checked out, return an error
+                raise HTTPException(status_code=400, detail="This item has already been checked out.")
+
+            # mark as checked out if not
+            connection.execute(sqlalchemy.text("""
+                INSERT INTO checkout (cart_id, checked_out)
+                VALUES (:cart_id, TRUE)
+                """), {"cart_id": cart_id})
             # calculate and return gold paid and num bought
             result = connection.execute(
                 sqlalchemy.text(
@@ -93,8 +116,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             
             # update current gold available
             connection.execute(sqlalchemy.text("""
-                INSERT INTO global_inventory (gold, checked_out)
-                VALUES (:total_gold_paid, TRUE);
+                INSERT INTO global_inventory (gold)
+                VALUES (:total_gold_paid);
             """), {"total_gold_paid": result.total_gold_paid})
             # update number of potions in inventory
             connection.execute(sqlalchemy.text("""
@@ -105,9 +128,10 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 """),
                 {"cart_id": cart_id}
             )
-        print(f"get_cart: total_gold_paid {result.total_gold_paid}")
-        print(f"get_cart: total_potions_bought {result.total_potions_bought}")
-        return {"total_potions_bought": result.total_potions_bought, "total_gold_paid": result.total_gold_paid}
+                
+            print(f"get_cart: total_gold_paid {result.total_gold_paid}")
+            print(f"get_cart: total_potions_bought {result.total_potions_bought}")
+            return {"total_potions_bought": result.total_potions_bought, "total_gold_paid": result.total_gold_paid}
     except IntegrityError as e:
         # Handle exceptions, such as database errors
         error_message = f"An error occurred: {str(e)}"
