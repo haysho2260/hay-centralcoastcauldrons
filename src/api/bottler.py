@@ -96,7 +96,7 @@ def mix_potions(num_red_ml, num_green_ml, num_blue_ml, num_dark_ml,result):
     plan = []
     for row in result:
         potion_type = sku_to_potion(row.sku)
-        quantity_potions = row.quantity
+        quantity_potions = row.sum_quantity
         print(f"get_bottle_plan: potion_type{potion_type}, quantity_potions {quantity_potions}")
 
         if quantity_potions > 0:
