@@ -28,7 +28,7 @@ def reset():
                 ('0_50_50_0', 65),
                 ('50_0_50_0', 65),
                 ('100_0_0_0', 65),
-                ('0_100_0_0', 65),
+                ('0_100_0_0', 65)
         """))
         connection.execute(sqlalchemy.text("""
             -- Insert the initial rows for global
