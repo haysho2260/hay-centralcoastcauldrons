@@ -112,3 +112,4 @@ def mix_potions(num_red_ml, num_green_ml, num_blue_ml, num_dark_ml,result):
                     "potion_type": potion_type,
                     "quantity": quantity_bottling
                 })
+    return plan
