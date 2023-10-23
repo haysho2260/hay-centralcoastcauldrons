@@ -145,3 +145,4 @@ def mix_potion(wholesale_catalog: list[Barrel], num_gold, red_ml, green_ml, blue
             "sku":"SMALL_GREEN_BARREL",
             "quantity": num_green_barrel
         })
+    return plan
