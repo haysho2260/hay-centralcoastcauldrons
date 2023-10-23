@@ -20,7 +20,7 @@ def reset():
     with db.engine.begin() as connection:
         # Drop existing tables
         connection.execute(sqlalchemy.text(
-            "TRUNCATE cart, cart_items, global_inventory, potions_catalog, potions_inventory CASCADE"))
+            "TRUNCATE cart, cart_items, global_inventory, potions_catalog, potions_inventory, checkout CASCADE"))
         connection.execute(sqlalchemy.text("""
             -- Insert the initial rows
             INSERT INTO public.potions_catalog (sku, price)
