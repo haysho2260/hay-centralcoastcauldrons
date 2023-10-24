@@ -52,19 +52,55 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
-
+    if customer_name and potion_sku:
+        sql = """
+            SELECT ci.cart_id, c.customer_name, 
+            c.created_at, sku, ci.quantity, pc.price
+            FROM cart_items as ci
+            JOIN carts AS c ON ci.cart_id = c.cart_id
+            LEFT JOIN potions_catalog AS pc ON ci.sku = pc.sku
+            WHERE c.customer_name ILIKE :customer_name
+            AND sku = :sku ;
+        """
+        inp = {"customer_name":customer_name, "sku":potion_sku}
+        
+    elif customer_name:
+        sql = """
+            SELECT ci.cart_id, c.customer_name, 
+            c.created_at, sku, ci.quantity, pc.price
+            FROM cart_items as ci
+            JOIN carts AS c ON ci.cart_id = c.cart_id
+            LEFT JOIN potions_catalog AS pc ON ci.sku = pc.sku
+            WHERE c.customer_name ILIKE :customer_name;
+        """
+        inp = {"customer_name":customer_name}
+    elif potion_sku:
+        sql = """
+            SELECT ci.cart_id, c.customer_name, 
+            c.created_at, sku, ci.quantity, pc.price
+            FROM cart_items as ci
+            JOIN carts AS c ON ci.cart_id = c.cart_id
+            LEFT JOIN potions_catalog AS pc ON ci.sku = pc.sku
+            WHERE sku = :sku ;
+        """
+        inp = {"sku":potion_sku}
+    results = []
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql), inp).all()
+        for row in result:
+            cart_id, customer_name, created_at, sku, quantity, price = row
+            results.append({
+                "line_item_id": cart_id,
+                "item_sku": sku,
+                "customer_name": customer_name,
+                "line_item_total": price * quantity,
+                "timestamp": created_at,
+            })
+        
     return {
         "previous": "",
         "next": "",
-        "results": [
-            {
-                "line_item_id": 1,
-                "item_sku": "1 oblivion potion",
-                "customer_name": "Scaramouche",
-                "line_item_total": 50,
-                "timestamp": "2021-01-01T00:00:00Z",
-            }
-        ],
+        "results": results,
     }
 
 class NewCart(BaseModel):
