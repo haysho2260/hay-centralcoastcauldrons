@@ -82,7 +82,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         blue_ml = result_global_inventory[3]    # Access the fourth column (num_blue_ml)
         dark_ml = result_global_inventory[4]    # Access the fifth column (num_dark_ml)      
         print(f"get_wholesale_purchase_plan: num_gold to begin with {num_gold}")
-        plan = (wholesale_catalog, num_gold, red_ml, green_ml, blue_ml, dark_ml)
+        plan = mix_potion(wholesale_catalog, num_gold, red_ml, green_ml, blue_ml, dark_ml)
         
         
     return plan
