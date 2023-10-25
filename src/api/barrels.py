@@ -76,24 +76,26 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 FROM global_inventory""")
         ).first()
 
-        num_gold = result_global_inventory[0]  # Access the first column (gold)
-        red_ml = result_global_inventory[1]     # Access the second column (num_red_ml)
-        green_ml = result_global_inventory[2]   # Access the third column (num_green_ml)
-        blue_ml = result_global_inventory[3]    # Access the fourth column (num_blue_ml)
-        dark_ml = result_global_inventory[4]    # Access the fifth column (num_dark_ml)      
+        num_gold = result_global_inventory.gold  # Access the first column (gold)
+        red_ml = result_global_inventory.num_red_ml    # Access the second column (num_red_ml)
+        green_ml = result_global_inventory.num_green_ml   # Access the third column (num_green_ml)
+        blue_ml = result_global_inventory.num_blue_ml    # Access the fourth column (num_blue_ml)
+        dark_ml = result_global_inventory.num_dark_ml    # Access the fifth column (num_dark_ml)      
         print(f"get_wholesale_purchase_plan: num_gold to begin with {num_gold}")
+        print("num_gold", num_gold, "red_ml:",red_ml, "green_ml:",green_ml, "blue_ml:",blue_ml, "dark_ml:",dark_ml)
         plan = mix_potion(wholesale_catalog, num_gold, red_ml, green_ml, blue_ml, dark_ml)
         
         
     return plan
         # plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})
 
+    
+
+def mix_potion(wholesale_catalog: list[Barrel], num_gold, red_ml, green_ml, blue_ml, dark_ml):
     ''' 
     future plan look at barrel with smallest ml
     buy that, see if that makes ml equal then loop through selling the rest starting at what has the least ml/what we just refilled
     '''
-
-def mix_potion(wholesale_catalog: list[Barrel], num_gold, red_ml, green_ml, blue_ml, dark_ml):
     plan = []
     price_red = -1
     price_green = -1

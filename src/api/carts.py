@@ -52,43 +52,33 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
+    sql = """
+        SELECT ci.cart_id, c.customer_name, 
+        c.created_at, sku, ci.quantity, pc.price
+        FROM cart_items as ci
+        JOIN cart AS c ON ci.cart_id = c.cart_id
+        INNER JOIN potions_catalog AS pc ON ci.sku = pc.sku
+        """
+
+    inp = {}
+
     if customer_name and potion_sku:
-        sql = """
-            SELECT ci.cart_id, c.customer_name, 
-            c.created_at, sku, ci.quantity, pc.price
-            FROM cart_items as ci
-            JOIN carts AS c ON ci.cart_id = c.cart_id
-            LEFT JOIN potions_catalog AS pc ON ci.sku = pc.sku
-            WHERE c.customer_name ILIKE :customer_name
-            AND sku = :sku ;
-        """
-        inp = {"customer_name":customer_name, "sku":potion_sku}
-        
+        sql += "WHERE c.customer_name ILIKE :customer_name AND sku ILIKE :sku;"
+        inp = {"customer_name": f"%{customer_name}%", "sku": f"%{potion_sku}%"}
     elif customer_name:
-        sql = """
-            SELECT ci.cart_id, c.customer_name, 
-            c.created_at, sku, ci.quantity, pc.price
-            FROM cart_items as ci
-            JOIN carts AS c ON ci.cart_id = c.cart_id
-            LEFT JOIN potions_catalog AS pc ON ci.sku = pc.sku
-            WHERE c.customer_name ILIKE :customer_name;
-        """
-        inp = {"customer_name":customer_name}
+        sql += "WHERE c.customer_name ILIKE :customer_name;"
+        inp = {"customer_name": f"%{customer_name}%"}
     elif potion_sku:
-        sql = """
-            SELECT ci.cart_id, c.customer_name, 
-            c.created_at, sku, ci.quantity, pc.price
-            FROM cart_items as ci
-            JOIN carts AS c ON ci.cart_id = c.cart_id
-            LEFT JOIN potions_catalog AS pc ON ci.sku = pc.sku
-            WHERE sku = :sku ;
-        """
-        inp = {"sku":potion_sku}
+        sql += "WHERE sku = :sku;"
+        inp = {"sku": f"%{potion_sku}%"}
+    # Add OFFSET and LIMIT here
+    sql += "OFFSET :offset LIMIT 6;"
+    inp["offset"] = search_page  # Replace offset_value with the desired offset
     results = []
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql), inp).all()
-        for row in result:
-            cart_id, customer_name, created_at, sku, quantity, price = row
+        for i in range(0, min(5, len(result))):
+            cart_id, customer_name, created_at, sku, quantity, price = result[i]
             results.append({
                 "line_item_id": cart_id,
                 "item_sku": sku,
@@ -96,10 +86,10 @@ def search_orders(
                 "line_item_total": price * quantity,
                 "timestamp": created_at,
             })
-        
+
     return {
-        "previous": "",
-        "next": "",
+        "previous": search_page - 5 if search_page >= 5 else "",
+        "next": search_page + 5 if len(result) > 5 else "",
         "results": results,
     }
 
