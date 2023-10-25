@@ -63,17 +63,28 @@ def search_orders(
     inp = {}
 
     if customer_name and potion_sku:
-        sql += "WHERE c.customer_name ILIKE :customer_name AND sku ILIKE :sku;"
+        sql += "WHERE c.customer_name ILIKE :customer_name AND sku ILIKE :sku"
         inp = {"customer_name": f"%{customer_name}%", "sku": f"%{potion_sku}%"}
     elif customer_name:
-        sql += "WHERE c.customer_name ILIKE :customer_name;"
+        sql += "WHERE c.customer_name ILIKE :customer_name"
         inp = {"customer_name": f"%{customer_name}%"}
     elif potion_sku:
-        sql += "WHERE sku = :sku;"
+        sql += "WHERE sku = :sku"
         inp = {"sku": f"%{potion_sku}%"}
-    # Add OFFSET and LIMIT here
-    sql += "OFFSET :offset LIMIT 6;"
+
     inp["offset"] = search_page  # Replace offset_value with the desired offset
+    
+    sort_col_mapping = {
+        search_sort_options.customer_name: "c.customer_name",
+        search_sort_options.item_sku: "ci.sku",
+        search_sort_options.line_item_total: "ci.quantity * pc.price",
+        search_sort_options.timestamp: "c.created_at",
+    }
+    sql += f"""
+        ORDER BY {sort_col_mapping[sort_col]}
+        {sort_order.value}
+        OFFSET :offset LIMIT 6;
+    """
     results = []
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql), inp).all()
