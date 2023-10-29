@@ -99,7 +99,7 @@ def mix_potions(num_red_ml, num_green_ml, num_blue_ml, num_dark_ml,result):
         quantity_potions = row.sum_quantity
         print(f"get_bottle_plan: potion_type{potion_type}, quantity_potions {quantity_potions}")
 
-        if quantity_potions > 0:
+        if quantity_potions > 1:
             print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottled {0}")
         else:
             if (2*potion_type[0] <= num_red_ml 
