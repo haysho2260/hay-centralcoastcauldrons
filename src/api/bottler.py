@@ -107,14 +107,19 @@ def mix_potions(num_red_ml, num_green_ml, num_blue_ml, num_dark_ml,result):
                 and 2*potion_type[2] <= num_blue_ml 
                 and 2*potion_type[3] <= num_dark_ml):
                 quantity_bottling = 2
+                print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
+                plan.append({
+                    "potion_type": potion_type,
+                    "quantity": quantity_bottling
+                })
             elif (potion_type[0] <= num_red_ml 
                 and potion_type[1] <= num_green_ml 
                 and potion_type[2] <= num_blue_ml 
                 and potion_type[3] <= num_dark_ml):
                 quantity_bottling = 1
-            print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
-            plan.append({
-                "potion_type": potion_type,
-                "quantity": quantity_bottling
-            })
+                print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
+                plan.append({
+                    "potion_type": potion_type,
+                    "quantity": quantity_bottling
+                })
     return plan
