@@ -31,13 +31,12 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                 connection.execute(
                     sqlalchemy.text(
                         """
-                        INSERT INTO potions_catalog
-                        (quantity, sku, )
-                        VALUES (:quantity, :sku, price)
-                        WHERE sku = :sku;
+                        INSERT INTO potions_inventory
+                        (quantity, sku)
+                        VALUES (:quantity, :sku)
                         """
                     ),
-                    [{"quantity": -potion.quantity,
+                    [{"quantity": potion.quantity,
                         "sku": potion_to_sku(potion.potion_type)}]
                 )
                 connection.execute(
@@ -83,10 +82,11 @@ def get_bottle_plan():
             FROM global_inventory""")).first()
         print(f"get_bottle_plan: colors {colors}")
         result = connection.execute(sqlalchemy.text("""
-            SELECT sku, SUM(quantity) AS sum_quantity
-            FROM potions_inventory
-            GROUP BY sku;
-            """)).all()
+            SELECT pc.sku, COALESCE(SUM(pi.quantity), 0) AS sum_quantity
+            FROM potions_catalog pc
+            LEFT JOIN potions_inventory pi ON pc.sku = pi.sku
+            GROUP BY pc.sku;
+        """)).all()
         plan=mix_potions(colors.num_red_ml, colors.num_green_ml, colors.num_blue_ml, colors.num_dark_ml, result)
         
 
@@ -102,14 +102,19 @@ def mix_potions(num_red_ml, num_green_ml, num_blue_ml, num_dark_ml,result):
         if quantity_potions > 0:
             print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottled {0}")
         else:
-            if (potion_type[0] <= num_red_ml 
+            if (2*potion_type[0] <= num_red_ml 
+                and 2*potion_type[1] <= num_green_ml 
+                and 2*potion_type[2] <= num_blue_ml 
+                and 2*potion_type[3] <= num_dark_ml):
+                quantity_bottling = 2
+            elif (potion_type[0] <= num_red_ml 
                 and potion_type[1] <= num_green_ml 
                 and potion_type[2] <= num_blue_ml 
                 and potion_type[3] <= num_dark_ml):
                 quantity_bottling = 1
-                print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
-                plan.append({
-                    "potion_type": potion_type,
-                    "quantity": quantity_bottling
-                })
+            print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
+            plan.append({
+                "potion_type": potion_type,
+                "quantity": quantity_bottling
+            })
     return plan

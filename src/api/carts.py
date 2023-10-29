@@ -7,6 +7,7 @@ import random
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 from enum import Enum
+from .catalog import potion_to_sku
 
 router = APIRouter(
     prefix="/carts",
@@ -155,7 +156,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                 VALUES (DEFAULT, :cart_id, DEFAULT, 
                 :quantity,:item_sku)
             """),
-                [{"cart_id": cart_id, "quantity": cart_item.quantity, "item_sku": item_sku}])
+                [{"cart_id": cart_id, "quantity": cart_item.quantity, "item_sku": potion_to_sku(item_sku.split(','))}])
         return "OK"
     except Exception as e:
         # Handle exceptions, such as database errors
