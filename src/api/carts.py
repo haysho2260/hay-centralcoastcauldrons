@@ -77,7 +77,7 @@ def search_orders(
         sql += "WHERE c.customer_name ILIKE :customer_name"
         inp = {"customer_name": f"%{customer_name}%"}
     elif potion_sku:
-        sql += "WHERE sku = :sku"
+        sql += "WHERE ci.sku = :sku"
         inp = {"sku": f"%{potion_sku}%"}
 
     inp["offset"] = search_page  # Replace offset_value with the desired offset
