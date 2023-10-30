@@ -53,6 +53,10 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
+    
+    if search_page == "":
+        search_page = 0
+        
     sql = """
         SELECT ci.cart_id, c.customer_name, 
         c.created_at, ci.sku, ci.quantity, pc.price
@@ -76,8 +80,7 @@ def search_orders(
 
     
     inp["offset"] = search_page  # Replace offset_value with the desired offset
-    if inp["offset"] == "":
-        inp["offset"] = 0
+    
     sort_col_mapping = {
         search_sort_options.customer_name: "c.customer_name",
         search_sort_options.item_sku: "ci.sku",
