@@ -84,7 +84,7 @@ def search_orders(
     sql += f"""
         ORDER BY {sort_col_mapping[sort_col]}
         {sort_order.value}
-        OFFSET :offset LIMIT 6;
+        OFFSET COALESCE(:offset, 0) LIMIT 6;
     """
     results = []
     with db.engine.begin() as connection:
