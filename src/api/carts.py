@@ -15,15 +15,18 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+
 class search_sort_options(str, Enum):
     customer_name = "customer_name"
     item_sku = "item_sku"
     line_item_total = "line_item_total"
     timestamp = "timestamp"
 
+
 class search_sort_order(str, Enum):
     asc = "asc"
-    desc = "desc"   
+    desc = "desc"
+
 
 @router.get("/search/", tags=["search"])
 def search_orders(
@@ -53,10 +56,10 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
-    
+
     if search_page == "":
         search_page = 0
-        
+
     sql = """
         SELECT ci.cart_id, c.customer_name, 
         c.created_at, ci.sku, ci.quantity, pc.price
@@ -77,17 +80,15 @@ def search_orders(
         sql += "WHERE sku = :sku"
         inp = {"sku": f"%{potion_sku}%"}
 
-
-    
     inp["offset"] = search_page  # Replace offset_value with the desired offset
-    
+
     sort_col_mapping = {
         search_sort_options.customer_name: "c.customer_name",
         search_sort_options.item_sku: "ci.sku",
         search_sort_options.line_item_total: "ci.quantity * pc.price",
         search_sort_options.timestamp: "c.created_at",
     }
-    
+
     sql += f"""
         ORDER BY {sort_col_mapping[sort_col]}
         {sort_order.value}
@@ -107,15 +108,18 @@ def search_orders(
             })
 
     return {
-        "previous": int(search_page) - 5 if int(search_page) - 5 >= 0 else "",
-        "next": int(search_page) + 5 if len(result) >= int(search_page) + 1 else "",
+        "previous": str(int(search_page) - 5 if int(search_page) - 5 >= 0 else ""),
+        "next": str(int(search_page) + 5 if len(result) >= int(search_page) + 1 else ""),
         "results": results,
     }
+
 
 class NewCart(BaseModel):
     customer: str
 
 # no unit test for create cart
+
+
 @router.post("/")
 def create_cart(new_cart: NewCart):
     # has supabase autogenerate id and return it
@@ -133,7 +137,7 @@ def create_cart(new_cart: NewCart):
             INSERT INTO public.checkout (cart_id) 
             VALUES (:cart_id)
             """
-            ),{"cart_id":cart_id})
+        ), {"cart_id": cart_id})
         print(f"create_cart: cart_id {cart_id}")
     return {"cart_id": cart_id}
 
@@ -189,7 +193,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             """), {"cart_id": cart_id}).scalar()
             if recent_checked_out:
                 # If already checked out, return an error
-                raise HTTPException(status_code=400, detail="This item has already been checked out.")
+                raise HTTPException(
+                    status_code=400, detail="This item has already been checked out.")
 
             # mark as checked out if not
             connection.execute(sqlalchemy.text("""
@@ -211,7 +216,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                         cart_items.cart_id = :cart_id
                     """
                 ), {"cart_id": cart_id}).first()
-            
+
             # update current gold available
             connection.execute(sqlalchemy.text("""
                 INSERT INTO global_inventory (gold)
@@ -224,15 +229,14 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 FROM cart_items AS ci
                 WHERE ci.cart_id = :cart_id;
                 """),
-                {"cart_id": cart_id}
-            )
-                
+                               {"cart_id": cart_id}
+                               )
+
             print(f"get_cart: total_gold_paid {result.total_gold_paid}")
-            print(f"get_cart: total_potions_bought {result.total_potions_bought}")
+            print(
+                f"get_cart: total_potions_bought {result.total_potions_bought}")
             return {"total_potions_bought": result.total_potions_bought, "total_gold_paid": result.total_gold_paid}
     except IntegrityError as e:
         # Handle exceptions, such as database errors
         error_message = f"An error occurred: {str(e)}"
         raise HTTPException(status_code=500, detail=error_message)
-
-    
