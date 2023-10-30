@@ -55,7 +55,7 @@ def search_orders(
     """
     sql = """
         SELECT ci.cart_id, c.customer_name, 
-        c.created_at, sku, ci.quantity, pc.price
+        c.created_at, ci.sku, ci.quantity, pc.price
         FROM cart_items as ci
         JOIN cart AS c ON ci.cart_id = c.cart_id
         INNER JOIN potions_catalog AS pc ON ci.sku = pc.sku
