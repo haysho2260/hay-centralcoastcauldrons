@@ -107,8 +107,8 @@ def search_orders(
             })
 
     return {
-        "previous": int(search_page) - 5 if int(search_page) >= 1 else "",
-        "next": int(search_page) + 5 if len(result) > 5 else "",
+        "previous": int(search_page) - 5 if int(search_page) - 5 >= 0 else "",
+        "next": int(search_page) + 5 if len(result) >= int(search_page) + 5 else "",
         "results": results,
     }
 
