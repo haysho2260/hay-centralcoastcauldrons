@@ -68,7 +68,7 @@ def search_orders(
     inp = {}
 
     if customer_name and potion_sku:
-        sql += "WHERE c.customer_name ILIKE :customer_name AND sku ILIKE :sku"
+        sql += "WHERE c.customer_name ILIKE :customer_name AND ci.sku ILIKE :sku"
         inp = {"customer_name": f"%{customer_name}%", "sku": f"%{potion_sku}%"}
     elif customer_name:
         sql += "WHERE c.customer_name ILIKE :customer_name"
