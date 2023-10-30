@@ -74,10 +74,10 @@ def search_orders(
         inp = {"sku": f"%{potion_sku}%"}
 
 
+    
+    inp["offset"] = search_page  # Replace offset_value with the desired offset
     if inp["offset"] == "":
         inp["offset"] = 0
-    inp["offset"] = search_page  # Replace offset_value with the desired offset
-    
     sort_col_mapping = {
         search_sort_options.customer_name: "c.customer_name",
         search_sort_options.item_sku: "ci.sku",
