@@ -73,6 +73,9 @@ def search_orders(
         sql += "WHERE sku = :sku"
         inp = {"sku": f"%{potion_sku}%"}
 
+
+    if inp["offset"] == "":
+        inp["offset"] = 0
     inp["offset"] = search_page  # Replace offset_value with the desired offset
     
     sort_col_mapping = {
@@ -81,10 +84,11 @@ def search_orders(
         search_sort_options.line_item_total: "ci.quantity * pc.price",
         search_sort_options.timestamp: "c.created_at",
     }
+    
     sql += f"""
         ORDER BY {sort_col_mapping[sort_col]}
         {sort_order.value}
-        OFFSET COALESCE(NULLIF(:offset, ''), '0') LIMIT 6;
+        OFFSET :offset LIMIT 6;
     """
     results = []
     with db.engine.begin() as connection:
