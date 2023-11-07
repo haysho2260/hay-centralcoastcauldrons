@@ -4,7 +4,7 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 from fastapi import HTTPException
-
+from .catalog import potion_to_sku, sku_to_potion
 
 router = APIRouter(
     prefix="/barrels",
@@ -14,11 +14,9 @@ router = APIRouter(
 
 class Barrel(BaseModel):
     sku: str
-
     ml_per_barrel: int
     potion_type: list[int]
     price: int
-
     quantity: int
 
 @router.post("/deliver")
@@ -75,76 +73,74 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 COALESCE(SUM(num_dark_ml),0) AS num_dark_ml 
                 FROM global_inventory""")
         ).first()
+        last3_hr_potions = connection.execute(
+            sqlalchemy.text("""
+                WITH c AS (
+                SELECT cart_id
+                FROM checkout
+                WHERE created_at >= NOW() - INTERVAL '3 hours')
+                SELECT ci.sku
+                FROM cart_items AS ci
+                JOIN c ON c.cart_id = ci.cart_id
+                """)
+        ).all()
+        
 
         num_gold = result_global_inventory.gold  # Access the first column (gold)
-        red_ml = result_global_inventory.num_red_ml    # Access the second column (num_red_ml)
-        green_ml = result_global_inventory.num_green_ml   # Access the third column (num_green_ml)
-        blue_ml = result_global_inventory.num_blue_ml    # Access the fourth column (num_blue_ml)
-        dark_ml = result_global_inventory.num_dark_ml    # Access the fifth column (num_dark_ml)      
+        inventory_ml = [result_global_inventory.num_red_ml, result_global_inventory.num_green_ml, 
+                        result_global_inventory.num_blue_ml, result_global_inventory.num_dark_ml]
+   
         print(f"get_wholesale_purchase_plan: num_gold to begin with {num_gold}")
-        print("num_gold", num_gold, "red_ml:",red_ml, "green_ml:",green_ml, "blue_ml:",blue_ml, "dark_ml:",dark_ml)
-        plan = mix_potion(wholesale_catalog, num_gold, red_ml, green_ml, blue_ml, dark_ml)
+        print("num_gold", num_gold, "red_ml:",result_global_inventory.num_red_ml, 
+              "green_ml:",result_global_inventory.num_green_ml, "blue_ml:",result_global_inventory.num_blue_ml, 
+              "dark_ml:",result_global_inventory.num_dark_ml)
+        plan = get_barrel_plan(wholesale_catalog, num_gold, inventory_ml, last3_hr_potions)
         
         
     return plan
-        # plan.append({"sku":barrel.sku, "quantity":barrels_to_buy})
 
     
 
-def mix_potion(wholesale_catalog: list[Barrel], num_gold, red_ml, green_ml, blue_ml, dark_ml):
+def get_barrel_plan(wholesale_catalog: list[Barrel], gold, inventory_ml: list[int], last3_hr_potions):
     ''' 
     future plan look at barrel with smallest ml
     buy that, see if that makes ml equal then loop through selling the rest starting at what has the least ml/what we just refilled
     '''
-    plan = []
-    price_red = -1
-    price_green = -1
-    quantity_red = 0
-    quantity_green = 0
-    price_blue = -1
-    price_dark = -1
-    quantity_blue = 0
-    quantity_dark = 0
+    most_used = [0,0,0,0]
+    plan=[]
+    for potion in last3_hr_potions:
+        p_sku = sku_to_potion(potion.sku)
+        most_used[0] += p_sku[1]
+        most_used[1] += p_sku[2]
+        most_used[2] += p_sku[3]
+        most_used[3] += p_sku[4]
+    # Sort the barrels by ml per gold spent in ascending order
+    wholesale_catalog.sort(key=lambda x: x.ml_per_barrel / x.price)
+
+    # Replenish empty inventory and buy for last 3 hours' potions
+    for i in range(4):
+        for barrel in wholesale_catalog:
+            if inventory_ml[i] == 0 and barrel.potion_type[i] == 1:
+                quantity_to_purchase = 1
+                if gold - quantity_to_purchase * barrel.price >= 0:
+                    plan.append({"sku": barrel.sku, "quantity": quantity_to_purchase})
+                    inventory_ml[i] += quantity_to_purchase * barrel.ml_per_barrel
+                    gold -= quantity_to_purchase * barrel.price
+
+    # Buy the rest of the barrels efficiently based on ml per gold spent
     for barrel in wholesale_catalog:
-        if barrel.sku == "SMALL_RED_BARREL":
-            price_red = barrel.price
-            print(f"get_wholesale_purchase_plan: price_red {price_red}")
-            quantity_red = barrel.quantity
-            print(f"get_wholesale_purchase_plan: quantity_red {quantity_red}")
-        elif barrel.sku == "SMALL_GREEN_BARREL":
-            price_green = barrel.price
-            print(f"get_wholesale_purchase_plan: price_green {price_green}")
-            quantity_green = barrel.quantity
-            print(f"get_wholesale_purchase_plan: quantity_green {quantity_green}")
-        elif barrel.sku == "SMALL_BLUE_BARREL":
-            price_blue = barrel.price
-            print(f"get_wholesale_purchase_plan: price_blue {price_blue}")
-            quantity_blue = barrel.quantity
-            print(f"get_wholesale_purchase_plan: quantity_blue {quantity_blue}")
-        elif barrel.sku == "SMALL_DARK_BARREL":
-            price_dark = barrel.price
-            print(f"get_wholesale_purchase_plan: price_dark {price_dark}")
-            quantity_dark = barrel.quantity
-            print(f"get_wholesale_purchase_plan: quantity_dark {quantity_dark}")
-    num_red_barrel = 0
-    num_green_barrel = 0
-    while num_gold - price_green >= 0 or num_gold - price_red >= 0:
-        if red_ml > green_ml and price_green <= num_gold and num_green_barrel < quantity_green:
-            num_gold -= price_green
-            num_green_barrel += 1
-        if red_ml <= green_ml and price_red <= num_gold and num_red_barrel < quantity_red:
-            num_gold -= price_red
-            num_red_barrel += 1
-    print(f"get_wholesale_purchase_plan: after buying num_gold {num_gold}")
-            # print(f"get_wholesale_purchase_plan: barrels_to_buy {barrels_to_buy}")
-    if num_red_barrel > 0:
-        plan.append({
-            "sku":"SMALL_RED_BARREL",
-            "quantity": num_red_barrel
-        })
-    if num_green_barrel > 0:
-        plan.append({
-            "sku":"SMALL_GREEN_BARREL",
-            "quantity": num_green_barrel
-        })
+        for i in range(4):
+            if most_used[i] > 0 and barrel.potion_type[i] == 1:
+                quantity_to_purchase = min(barrel.quantity, gold // barrel.price)
+                if quantity_to_purchase > 0 and gold - quantity_to_purchase * barrel.price >= 0:
+                    plan.append({"sku": barrel.sku, "quantity": quantity_to_purchase})
+                    most_used[i] -= quantity_to_purchase * barrel.ml_per_barrel
+                    inventory_ml[i] += quantity_to_purchase * barrel.ml_per_barrel
+                    gold -= quantity_to_purchase * barrel.price
+
     return plan
+
+
+
+
+

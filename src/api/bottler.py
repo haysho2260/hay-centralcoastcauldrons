@@ -81,45 +81,72 @@ def get_bottle_plan():
             COALESCE(SUM(num_dark_ml),0) AS num_dark_ml
             FROM global_inventory""")).first()
         print(f"get_bottle_plan: colors {colors}")
-        result = connection.execute(sqlalchemy.text("""
+        potions_in_inventory = connection.execute(sqlalchemy.text("""
             SELECT pc.sku, COALESCE(SUM(pi.quantity), 0) AS sum_quantity
             FROM potions_catalog pc
             LEFT JOIN potions_inventory pi ON pc.sku = pi.sku
-            GROUP BY pc.sku;
+            GROUP BY pc.sku
+            ORDER BY sum_quantity ASC;
         """)).all()
-        plan=mix_potions(colors.num_red_ml, colors.num_green_ml, colors.num_blue_ml, colors.num_dark_ml, result)
+        last3_hr_potions = connection.execute(
+            sqlalchemy.text("""
+                WITH c AS (
+                    SELECT cart_id
+                    FROM checkout
+                    WHERE created_at >= NOW() - INTERVAL '3 hours'
+                )
+                SELECT ci.sku, COUNT(ci.sku) AS sku_count
+                FROM cart_items AS ci
+                JOIN c ON c.cart_id = ci.cart_id
+                GROUP BY ci.sku
+                """)
+        ).all()
+
+        
+        inventory_ml = [colors.num_red_ml, colors.num_green_ml, colors.num_blue_ml, colors.num_dark_ml]
+        plan=mix_potions(inventory_ml, potions_in_inventory, last3_hr_potions)
         
 
     return plan
 
-def mix_potions(num_red_ml, num_green_ml, num_blue_ml, num_dark_ml,result):
+def mix_potions(inventory_ml, potions_in_inventory, last3_hr_potions):
+    inventory_potions = {potion.sku: potion.sum_quantity for potion in potions_in_inventory}
+    last3_hr_potions_dict = {potion.sku: potion.sku_count for potion in last3_hr_potions}
     plan = []
-    for row in result:
-        potion_type = sku_to_potion(row.sku)
-        quantity_potions = row.sum_quantity
-        print(f"get_bottle_plan: potion_type{potion_type}, quantity_potions {quantity_potions}")
 
-        if quantity_potions > 1:
-            print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottled {0}")
-        else:
-            if (2*potion_type[0] <= num_red_ml 
-                and 2*potion_type[1] <= num_green_ml 
-                and 2*potion_type[2] <= num_blue_ml 
-                and 2*potion_type[3] <= num_dark_ml):
-                quantity_bottling = 2
-                print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
+    # Replenish recently bought potions to have 1/3 of their original quantity
+    for sku, quantity in inventory_potions.items():
+        if sku in last3_hr_potions_dict and last3_hr_potions_dict[sku] > 0:
+            potion_type = sku_to_potion(sku)
+            replenish_quantity = (quantity * 2/3) // 1
+            ml_needed = [potion_type[i] * replenish_quantity for i in range(4)]
+
+            # Check if you have enough ml in inventory to make these potions
+            if all(ml_needed[i] <= inventory_ml[i] for i in range(4)):
                 plan.append({
                     "potion_type": potion_type,
-                    "quantity": quantity_bottling
+                    "quantity": replenish_quantity
                 })
-            elif (potion_type[0] <= num_red_ml 
-                and potion_type[1] <= num_green_ml 
-                and potion_type[2] <= num_blue_ml 
-                and potion_type[3] <= num_dark_ml):
-                quantity_bottling = 1
-                print(f"get_bottle_plan: potion_type{potion_type}, quantity_bottling {quantity_bottling}")   
+                # Deduct the used ml from inventory
+                for i in range(4):
+                    inventory_ml[i] -= ml_needed[i]
+
+    # Replenish potions with 0 quantity
+    for sku, quantity in inventory_potions.items():
+        if quantity == 0:
+            potion_type = sku_to_potion(sku)
+            replenish_quantity = 1
+            ml_needed = [potion_type[i] * replenish_quantity for i in range(4)]
+
+            # Check if you have enough ml in inventory to make these potions
+            if all(ml_needed[i] <= inventory_ml[i] for i in range(4)):
                 plan.append({
                     "potion_type": potion_type,
-                    "quantity": quantity_bottling
+                    "quantity": replenish_quantity
                 })
+                # Deduct the used ml from inventory
+                for i in range(4):
+                    inventory_ml[i] -= ml_needed[i]
+
     return plan
+

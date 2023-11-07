@@ -206,14 +206,15 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 sqlalchemy.text(
                     """
                     SELECT 
-                        COALESCE(SUM(cart_items.quantity * potions_catalog.price),0) AS total_gold_paid,
-                        COALESCE(SUM(cart_items.quantity),0) AS total_potions_bought
+                        COALESCE(SUM(potions_catalog.price), 0) AS total_gold_paid
                     FROM 
                         cart_items
                     JOIN
                         potions_catalog ON cart_items.sku = potions_catalog.sku
                     WHERE 
                         cart_items.cart_id = :cart_id
+                    GROUP BY
+                        cart_items.sku, potions_catalog.sku
                     """
                 ), {"cart_id": cart_id}).first()
 
@@ -223,19 +224,20 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 VALUES (:total_gold_paid);
             """), {"total_gold_paid": result.total_gold_paid})
             # update number of potions in inventory
-            connection.execute(sqlalchemy.text("""
+            quantity= connection.execute(sqlalchemy.text("""
                 INSERT INTO potions_inventory (quantity, sku)
                 SELECT -ci.quantity, ci.sku
                 FROM cart_items AS ci
-                WHERE ci.cart_id = :cart_id;
+                WHERE ci.cart_id = :cart_id
+                RETURNING quantity;
                 """),
                                {"cart_id": cart_id}
-                               )
+                               ).scalar()
 
             print(f"get_cart: total_gold_paid {result.total_gold_paid}")
             print(
-                f"get_cart: total_potions_bought {result.total_potions_bought}")
-            return {"total_potions_bought": result.total_potions_bought, "total_gold_paid": result.total_gold_paid}
+                f"get_cart: total_potions_bought {quantity}")
+            return {"total_potions_bought": quantity, "total_gold_paid": result.total_gold_paid}
     except IntegrityError as e:
         # Handle exceptions, such as database errors
         error_message = f"An error occurred: {str(e)}"
