@@ -2,8 +2,7 @@ create table
   public.potions_catalog (
     sku text not null,
     created_at timestamp with time zone not null default now(),
-    price integer not null default 0,
-    constraint potions_catalog_pkey primary key (sku)
+    price integer not null default 0
   ) tablespace pg_default;
 
 INSERT INTO public.potions_catalog (sku, price)

@@ -45,8 +45,16 @@ def get_catalog():
                 GROUP BY ci.sku
                 ORDER BY COUNT(ci.sku) DESC;
             """)
-        ).all()
-        adjust_potion_prices(potions_in_inventory, last3_hr_potions)
+        ).all() 
+        prices_updated = sqlalchemy.text("""
+           SELECT CASE
+            WHEN MAX(created_at) >= NOW() - INTERVAL '3 hours' THEN true
+            ELSE false
+            END AS last_change_within_last_hour
+            FROM potions_catalog;
+            """)
+        if not prices_updated:
+            adjust_potion_prices(potions_in_inventory, last3_hr_potions)
         catalog = limit_catalog(potions_in_inventory, last3_hr_potions)
         
     return catalog
