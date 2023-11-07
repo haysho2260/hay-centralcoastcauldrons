@@ -58,7 +58,7 @@ def limit_catalog(potions_in_inventory, last3_hr_potions):
     # if more room, randomly select anything in inventory where quantity > 0 
     catalog = []
     for potion in last3_hr_potions:
-        if potion.sum_quantity > 0:
+        if potion.quantity > 0:
             catalog.append({
                 "sku": potion.sku,
                 "name": potion.sku,  # You can adjust 'name' as needed
