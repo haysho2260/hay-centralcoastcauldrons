@@ -103,23 +103,25 @@ def adjust_potion_prices(potions_in_inventory, last3_hr_potions):
 
     for sku, quantity in inventory_potions.items():
         if sku in last3_hr_potions_dict:
-            with db.engine.begin() as connection:
-                connection.execute(sqlalchemy.text(
-                """
-                    INSERT INTO public.potions_catalog 
-                    (sku, price) 
-                    VALUES (:sku,  
-                    :price)
-                """),
-                    [{"sku": sku, "price": 5}])
+            if last3_hr_potions_dict.price < 500:
+                with db.engine.begin() as connection:
+                    connection.execute(sqlalchemy.text(
+                    """
+                        INSERT INTO public.potions_catalog 
+                        (sku, price) 
+                        VALUES (:sku,  
+                        :price)
+                    """),
+                        [{"sku": sku, "price": 5}])
         else:
-            with db.engine.begin() as connection:
-                connection.execute(sqlalchemy.text(
-                """
-                    INSERT INTO public.potions_catalog 
-                    (sku, price) 
-                    VALUES (:sku,  
-                    :price)
-                """),
-                    [{"sku": sku, "price": -5}])
+            if last3_hr_potions_dict.price > 25:
+                with db.engine.begin() as connection:
+                    connection.execute(sqlalchemy.text(
+                    """
+                        INSERT INTO public.potions_catalog 
+                        (sku, price) 
+                        VALUES (:sku,  
+                        :price)
+                    """),
+                        [{"sku": sku, "price": -5}])
     return "OK"
