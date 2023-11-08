@@ -261,7 +261,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             print(f"get_cart: total_gold_paid {result.total_gold_paid}")
             print(
                 f"get_cart: total_potions_bought {quantity}")
-            return {"total_potions_bought": quantity, "total_gold_paid": result.total_gold_paid}
+            return {"total_potions_bought": -quantity, "total_gold_paid": result.total_gold_paid}
     except IntegrityError as e:
         # Handle exceptions, such as database errors
         error_message = f"An error occurred: {str(e)}"
