@@ -113,6 +113,16 @@ def adjust_potion_prices(potions_in_inventory, last3_hr_potions):
                         :price)
                     """),
                         [{"sku": sku, "price": 5}])
+            else:
+                with db.engine.begin() as connection:
+                    connection.execute(sqlalchemy.text(
+                    """
+                        INSERT INTO public.potions_catalog 
+                        (sku, price) 
+                        VALUES (:sku,  
+                        :price)
+                    """),
+                        [{"sku": sku, "price": 500-last3_hr_potions_dict.price}])
         else:
             if last3_hr_potions_dict.price > 25:
                 with db.engine.begin() as connection:
