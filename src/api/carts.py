@@ -109,7 +109,7 @@ def search_orders(
     sort_col_mapping = {
         search_sort_options.customer_name: "c.customer_name",
         search_sort_options.item_sku: "ci.sku",
-        search_sort_options.line_item_total: "ci.quantity * pc.price",
+        search_sort_options.line_item_total: "ci.total_quantity * potion_price.price",
         search_sort_options.timestamp: "c.created_at",
     }
 
