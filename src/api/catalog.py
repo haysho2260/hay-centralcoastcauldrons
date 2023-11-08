@@ -30,6 +30,20 @@ def get_catalog():
             LEFT JOIN potions_catalog AS pc ON pi.sku = pc.sku
             GROUP BY pi.sku
             HAVING SUM(pi.quantity) > 0;
+            
+            WITH potion_price AS (
+            SELECT SUM(pc.price) AS price, pc.sku
+            FROM potions_catalog AS pc
+            GROUP BY pc.sku
+            ),
+            potion_quantity AS (
+              SELECT pi.sku, SUM(pi.quantity) AS quantity
+              FROM potions_inventory AS pi
+              GROUP BY pi.sku
+            )
+            SELECT potion_price.price AS price, potion_quantity.sku AS sku, potion_quantity.quantity AS quantity
+            FROM potion_price
+            JOIN potion_quantity ON potion_quantity.sku = potion_price.sku
         """)).all()
         last3_hr_potions = connection.execute(
             sqlalchemy.text("""
