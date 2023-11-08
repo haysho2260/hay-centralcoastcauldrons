@@ -66,7 +66,7 @@ def search_orders(
         FROM cart_items AS ci
         JOIN cart AS c ON ci.cart_id = c.cart_id
         INNER JOIN potions_catalog AS pc ON ci.sku = pc.sku
-        GROUP BY ci.cart_id, c.customer_name, c.created_at, ci.sku;
+        GROUP BY ci.cart_id, c.customer_name, c.created_at, ci.sku
         """
 
     inp = {}
