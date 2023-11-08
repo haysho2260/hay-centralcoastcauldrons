@@ -61,11 +61,12 @@ def search_orders(
         search_page = 0
 
     sql = """
-        SELECT ci.cart_id, c.customer_name, 
-        c.created_at, ci.sku, ci.quantity, pc.price
-        FROM cart_items as ci
+        SELECT ci.cart_id, c.customer_name, c.created_at, ci.sku, 
+        SUM(ci.quantity) AS total_quantity, SUM(pc.price * ci.quantity) AS price
+        FROM cart_items AS ci
         JOIN cart AS c ON ci.cart_id = c.cart_id
         INNER JOIN potions_catalog AS pc ON ci.sku = pc.sku
+        GROUP BY ci.cart_id, c.customer_name, c.created_at, ci.sku;
         """
 
     inp = {}
