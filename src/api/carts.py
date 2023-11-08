@@ -68,6 +68,29 @@ def search_orders(
         INNER JOIN potions_catalog AS pc ON ci.sku = pc.sku
         GROUP BY ci.cart_id, c.customer_name, c.created_at, ci.sku
         """
+    sql = """
+    WITH potion_price AS (
+    SELECT SUM(pc.price) AS price, pc.sku
+    FROM potions_catalog AS pc
+    GROUP BY pc.sku
+    ),
+    potion_quantity AS (
+    SELECT pi.sku, SUM(pi.quantity) AS quantity
+    FROM potions_inventory AS pi
+    GROUP BY pi.sku
+    ),
+    ci AS (
+    SELECT ci.cart_id, SUM(ci.quantity) AS total_quantity, ci.sku
+    FROM cart_items AS ci
+    GROUP BY ci.sku, ci.cart_id
+    )
+    SELECT ci.cart_id, c.customer_name, c.created_at, ci.sku, 
+    ci.total_quantity AS total_quantity, SUM(potion_price.price * ci.total_quantity) AS price
+    FROM ci
+    JOIN cart AS c ON ci.cart_id = c.cart_id
+    JOIN potion_price ON ci.sku = potion_price.sku
+    GROUP BY ci.cart_id, c.customer_name, c.created_at, ci.sku, ci.total_quantity
+    """
 
     inp = {}
 
