@@ -115,9 +115,9 @@ def adjust_potion_prices(potions_in_inventory, last3_hr_potions):
     inventory_potions = {potion.sku: potion.quantity for potion in potions_in_inventory}
     last3_hr_potions_dict = {potion.sku: potion.sku_count for potion in last3_hr_potions}
 
-    for sku, quantity in inventory_potions.items():
-        if sku in last3_hr_potions_dict:
-            if last3_hr_potions_dict[sku].price < 500:
+    for potion in inventory_potions:
+        if potion.sku in last3_hr_potions_dict:
+            if potion.price < 500:
                 with db.engine.begin() as connection:
                     connection.execute(sqlalchemy.text(
                     """
@@ -126,7 +126,7 @@ def adjust_potion_prices(potions_in_inventory, last3_hr_potions):
                         VALUES (:sku,  
                         :price)
                     """),
-                        [{"sku": sku, "price": 5}])
+                        [{"sku": potion.sku, "price": 5}])
             else:
                 with db.engine.begin() as connection:
                     connection.execute(sqlalchemy.text(
@@ -136,9 +136,9 @@ def adjust_potion_prices(potions_in_inventory, last3_hr_potions):
                         VALUES (:sku,  
                         :price)
                     """),
-                        [{"sku": sku, "price": 500-last3_hr_potions_dict[sku].price}])
+                        [{"sku": potion.sku, "price": 500-potion.price}])
         else:
-            if last3_hr_potions_dict[sku].price > 25:
+            if last3_hr_potions_dict[potion.sku].price > 25:
                 with db.engine.begin() as connection:
                     connection.execute(sqlalchemy.text(
                     """
@@ -147,5 +147,5 @@ def adjust_potion_prices(potions_in_inventory, last3_hr_potions):
                         VALUES (:sku,  
                         :price)
                     """),
-                        [{"sku": sku, "price": -5}])
+                        [{"sku": potion.sku, "price": -5}])
     return "OK"
